@@ -87,8 +87,8 @@ A prioridade será sempre ter uma versão jogável antes de aumentar a escala.
       (`Pine_Hollow_GDD_v0.1.md:150-169`), não um mapa. Sem adjacências, sem distâncias, sem planta.
       Bloqueia a FASE 9.
 - [x] Estrutura narrativa
-- [ ] Referências visuais finais — as imagens ainda **não foram recolhidas**; protocolo e
-      candidatos em `Pine_Hollow_Direccao_Artistica.md` §4
+- [x] Referências visuais finais — `Referencias/NOTAS.md`: cinco conjuntos, com **o que se rouba de
+      cada um** e o que explicitamente não se rouba. As notas versionam-se, as imagens não
 - [x] Direção artística final — `Pine_Hollow_Direccao_Artistica.md`: **A** como regra de luz, **C**
       nos interiores importantes, **B** só em momentos; regra 1986/2026 confirmada (21/09)
 - [x] Lista final de assets — `Pine_Hollow_Producao.md` §2

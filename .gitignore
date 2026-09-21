@@ -104,3 +104,16 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Referências visuais: as notas versionam-se, as imagens não.
+# São obra de terceiros, pesam em cada clone, e não são assets do jogo. Ver Referencias/NOTAS.md.
+Referencias/**/*.jpg
+Referencias/**/*.jpeg
+Referencias/**/*.png
+Referencias/**/*.webp
+Referencias/**/*.gif
+Referencias/**/*.tif
+Referencias/**/*.tiff
+Referencias/**/*.pdf
+Referencias/**/*.mp4
+Referencias/**/*.mov

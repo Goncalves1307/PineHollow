@@ -33,22 +33,24 @@ Código total: **11 scripts, ~840 linhas**, uma cena jogável.
 
 ## Fase a fase
 
-### FASE 0 — Pré-produção · ~90%
+### FASE 0 — Pré-produção · ✅ **fechada**
 
 > Revisto a 2026-09-21 (task `869f4yfdz`). Duas entregas novas na raiz:
 > `Pine_Hollow_Producao.md` (limites técnicos + lista de assets) e
-> `Pine_Hollow_Direccao_Artistica.md` (direcção **escolhida**; falta só a paleta e as referências).
+> `Pine_Hollow_Direccao_Artistica.md` (direcção escolhida, paleta com valores na §7) e a pasta
+> `Referencias/` com as notas. **A FASE 0 fica fechada**; o que sobra são itens de outras fases.
 
 | Item | Estado | Nota |
 |---|---|---|
 | Conceito, história, GDD, core gameplay, personagens, estrutura narrativa | ✅ | Documentos na raiz do repo |
 | **Mapa conceptual** | ❌ | 🔴 **o plano dava como feito e não está** — `GDD:150-169` é uma lista de 20 locais, não um mapa: sem adjacências, sem distâncias, sem planta, zero imagens no repo. Reaberto no plano. **Bloqueia a FASE 9** |
-| Referências visuais finais | ❌ | **O único item da FASE 0 ainda por fechar.** Protocolo e candidatos em `Pine_Hollow_Direccao_Artistica.md` §4; as imagens não foram recolhidas |
+| Referências visuais finais | ✅ | `Referencias/NOTAS.md` — Twin Peaks/Snoqualmie, Alec Soth, Todd Hido, Gregory Crewdson e o Kodak Gold de 1986, cada um com o que se rouba **e o que não se rouba**. Imagens fora do repo por `.gitignore` |
 | Direção artística final | ✅ | **A** (céu encoberto) é a regra de luz; **C** (cor na matéria) nos interiores importantes; **B** (luz praticável) só em momentos narrativos. Regra 1986/2026 confirmada: a geometria nunca muda entre épocas |
 | Lista final de assets | ✅ | `Pine_Hollow_Producao.md` §2 — cobre os 22 locais, os 16 itens da FASE 18 e os 13 do slice |
 | Limites técnicos | ✅ | `Pine_Hollow_Producao.md` §1 — plataformas, 60 fps, máquina mínima, orçamentos |
 
-Continua a não existir um único asset de arte no projecto.
+Continua a não existir um único asset de arte no projecto — mas já existe a regra que diz como
+devem ser feitos.
 
 🔴 **Duas listas de locais que não coincidem:** `Plano:343-364` tem 22 e `GDD:150-169` tem 20. Dezanove
 são a mesma coisa com nomes diferentes (Lake Hollow/Lago, Zona montanhosa/Montanha, Town Hall/Câmara

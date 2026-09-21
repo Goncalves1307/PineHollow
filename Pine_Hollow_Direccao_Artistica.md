@@ -1,9 +1,9 @@
 # Pine Hollow — Direcção artística
 
-> **Estado: direcção escolhida a 2026-09-21.** É a **A** como regra de luz, com **C** nos interiores
-> importantes e **B** reservada a momentos narrativos — ver §3. A regra 1986/2026 da §5 foi
-> **confirmada**. Fica em aberto apenas a **paleta concreta** e a **recolha de referências** (§4),
-> que dependem de se ver imagens.
+> **Estado: fechado a 2026-09-21.** Direcção **A** como regra de luz, **C** nos interiores
+> importantes, **B** só em momentos narrativos (§3). Regra 1986/2026 confirmada (§5). Referências
+> em `Referencias/NOTAS.md` (§4) e paleta com valores na §7.
+> Fica em aberto um só ponto, e é de gosto: **quanto grão e registo de lente** tem o jogo em si.
 >
 > Companheiro: `Pine_Hollow_Producao.md` (o que custa) · Última revisão: 2026-09-21.
 
@@ -170,12 +170,74 @@ trabalhar a luz a sério quer **HDR** e LUT 32-64. Também FASE 1.
 (`CopyPasteTestComponent` e afins). Vão aparecer como «missing script» a quem o abrir para configurar
 grading. São lixo do pacote URP, não do projecto.
 
+## 7. A paleta
+
+Num jogo realista em espaço linear, «paleta» não é uma lista de cores de interface — é **disciplina de
+albedo** mais **temperatura de luz**. Os materiais não são as cores que se vêem; são as cores que a
+luz encontra.
+
+### 7.1 Disciplina de albedo (a regra que evita o aspecto de plástico)
+
+Nenhum albedo sai deste intervalo, e isto **não é gosto, é física**: superfícies reais não são nem
+pretas nem brancas.
+
+| | sRGB | Nota |
+|---|---|---|
+| Mínimo absoluto | **50** | asfalto molhado, carvão. Abaixo disto a superfície come luz e o sítio parece um buraco |
+| Máximo absoluto | **240** | tinta branca fresca, neve. Acima disto estoira e perde-se a forma |
+| A esmagadora maioria | 70-180 | é aqui que vive Pine Hollow |
+
+### 7.2 As famílias (direcção C — a cor está na matéria)
+
+| Família | sRGB | Onde |
+|---|---|---|
+| Névoa / céu encoberto | `#A8B2B5` | o tom que o jogo tem por omissão ao longe |
+| Verde floresta profundo | `#2E3A2B` | copas, fundo de floresta |
+| Verde musgo e rasteira | `#4A5A3A` | o verde que se vê de perto, mais claro que as copas |
+| Madeira molhada | `#3E342C` | fachadas, alpendres, o pontão do lago |
+| Betão manchado | `#7A7B76` | fábrica, passeios, túneis |
+| Asfalto húmido | `#33363A` | estrada — e é o mais escuro que o jogo tem |
+| Tinta lascada | `#C8C4B8` | casas da vila. Nunca branco puro |
+| **Ferrugem** | `#7A3B22` | **o único vermelho do jogo** |
+| Folha morta | `#8A5A2B` | o acento quente, sazonal, de Outono |
+| Cobre oxidado | `#4E7A6A` | acento frio, raro — canalização, calhas, o que a água estragou |
+
+**Regra de acento: um por plano, e é sempre matéria, nunca luz.** Num mundo cinzento-esverdeado, a
+ferrugem ou uma folhada são o que o olho encontra — e é por isso que se usam para dizer *«olha para
+aqui»* sem pôr um marcador no ecrã. Dois acentos no mesmo plano e nenhum aponta para nada.
+
+**Humidade é a ferramenta de contraste.** Uma superfície molhada é mais escura e mais saturada do que
+a mesma seca, sem mudar de cor. Numa paleta dessaturada é assim que se ganha variação sem gastar
+assets nem sair da direcção.
+
+### 7.3 Temperatura de luz — e é aqui que as épocas se separam
+
+| | 2026 | 1986 |
+|---|---|---|
+| Céu (dominante) | **6500-7000 K**, encoberto e frio | 5500-6000 K, mais aberto |
+| Direccional | fraca, 5500 K, sem direcção marcada | mais presente, mais baixa no céu |
+| Luz praticável | poucas, **4000 K** (LED, o que sobrou) | muitas, **2700-3000 K** (tungsténio) |
+| Iluminação pública | apagada ou partida | **sódio, ~2000 K** — o laranja da época |
+| Janelas | cegas | acesas |
+
+**É esta tabela a regra 1986/2026 na prática.** A geometria é a mesma (§5); o que muda é a coluna. Um
+interior de 1986 é quente porque tem lâmpadas de tungsténio acesas; o mesmo interior em 2026 é frio
+porque só lá entra o céu. Não é um filtro por cima — são luzes diferentes na mesma divisão.
+
+### 7.4 O que isto obriga a FASE 1
+
+O grading vive em **HDR**, não no `m_ColorGradingMode: 0` (LDR) que o `PC_RPAsset:79` tem hoje, com
+LUT de 32 ou 64. Sem isso, as altas luzes das janelas de 1986 estoiram a branco e perde-se o único
+sítio onde esta paleta tem calor.
+
 ---
 
 ## Em aberto — o que falta decidir
 
 - [x] **A direcção** — A como regra de luz, C nos interiores importantes, B só em momentos (§3).
 - [x] **Regra 1986/2026** — confirmada como está na §5: a geometria nunca muda.
-- [ ] **Paleta concreta** — falta, e depende de se verem referências.
-- [ ] **Referências**: recolher (§4), e decidir se `Referencias/` entra no repositório ou fica de fora.
+- [x] **Paleta concreta** — §7: disciplina de albedo, dez famílias com valores, e a tabela de
+      temperatura de luz que separa 1986 de 2026.
+- [x] **Referências** — `Referencias/NOTAS.md`, cinco conjuntos com o que se rouba de cada um.
+      As notas versionam-se; as imagens ficam de fora do repositório (`.gitignore`).
 - [ ] **Grão e registo de lente do jogo** (não das fotografias): quanto, ou nenhum. Ver regra 3 da §2.
