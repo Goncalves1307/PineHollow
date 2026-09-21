@@ -19,11 +19,14 @@ Scope: compact open world ~3 km², town of ~2.800 inhabitants, 8 chapters, ~7 fl
 endings. First technical objective is a **15–20 minute vertical slice** (arrival → house → studio →
 first photographs → first alignment → first 1986 flashback → altered photograph), not the full town.
 
-**Current build reality: a mechanics sandbox.** 22 scripts, two scenes, ~2.450 lines, 81 EditMode
-tests. Walk, look, sprint, crouch, interact at short range (`E`) with a highlight on the focused
+**Current build reality: a mechanics sandbox with a working photography layer.** 28 scripts, two
+scenes, 157 EditMode tests. Walk, look, sprint, crouch, interact at short range (`E`) with a highlight on the focused
 object, open a door, a drawer and a switch, read a document, pick an object up to rotate, zoom and
-read its description, take screenshot-style photos into an in-memory album. Footsteps and
-object-handling sounds play. No narrative content, no NPCs, no save, no era system.
+read its description, take screenshot-style photos. Since FASE 5: pick up **authored photographs**
+from the world, flip them to read the canonical text on the back (`Q`), open the album (`Tab`),
+compare two photographs side by side or overlaid, and align them — which flashes and reveals what
+that pair hides. Footsteps and object-handling sounds play. No NPCs, no save, no era system, and
+**no flashback**: aligning fires a trigger nothing consumes yet.
 `bundleVersion 0.1.0`, `companyName: DefaultCompany`.
 
 Docs, comments, `Debug.Log` strings and UI text are in **pt-PT**. Match that when editing. Commits
@@ -68,13 +71,13 @@ implemented — see the caveat below. Do not re-implement a system because its b
 a `.gitkeep`, because git does not store empty directories and without it they simply did not
 appear in a fresh clone. Write new assets into `_Project/`; do not start a third layout.
 
-**The photography that exists is not the photography the GDD describes.** `PhotographySystem` is an
-*in-game camera*: it renders the view to a 256×256 RenderTexture and appends a bare `Texture2D` to
-a `List`. The GDD's photography is about photographs as **data objects** — Fase 5 spells out the
-shape: date, location, people, metadata, front, **back**, image; then compare, overlay, align,
-trigger flashback. A raw `Texture2D` carries none of that and cannot. Before building comparison or
-alignment on top, the list has to become a `PhotoData` type. Treat the current capture path as a
-prototype of one verb ("tirar fotografia"), not as the foundation.
+**~~The photography that exists is not the photography the GDD describes~~ — done in FASE 5**
+(`869f4yfg4`). `capturedPhotos` is a `List<PhotoData>`: date, location, people, metadata, front,
+**back**, image, declared alignments and discoveries. Authored photographs are `PhotoAsset`
+ScriptableObjects (the first in the project) and hand out a **copy** — revealing a discovery is
+game state, and writing it into the asset dirties the file on disk. Player captures come from
+`PhotoData.DeCaptura` and differ by one field, not by a second code path. The in-game camera is
+still a prototype of one verb, and still 256×256.
 
 **Nothing in the code anticipates two eras.** Fase 7 requires a World State with a 2026 state and a
 1986 state, and Chapter 4 turns on a flashback *creating* a door that then exists in 2026. No
@@ -107,10 +110,16 @@ grep -nE "error CS|warning CS" Logs/Editor.log | tail -20
 
 `Logs/Editor.log` is append-only across sessions and currently ~10MB — always `tail`, never `cat`.
 
-**There are seven test files**, all EditMode, **81 tests**, in `Assets/_Project/Tests/Editor/`:
+**There are eleven test files**, all EditMode, **157 tests**, in `Assets/_Project/Tests/Editor/`:
 `PlayerStateMachineTests`, `InteractionSystemTests`, `InteractablesTests`, `InspectionSystemTests`,
-`HighlightSystemTests`, `CrosshairSystemTests` and `PrototypePlayerSceneTests` (this last one opens
-the real scene and asserts the inspector wiring, because the scene is edited as YAML by hand).
+`HighlightSystemTests`, `CrosshairSystemTests`, `PrototypePlayerSceneTests` (this one opens the
+real scene and asserts the inspector wiring), plus the FASE 5 four: `PhotoDataTests`,
+`PhotoComparisonSystemTests`, `PhotoAlbumSystemTests` and `PhotoVersoTests`.
+
+**Tests that touch UI must wire the `RawImage`s.** The comparison tests did not, and because
+`Desenhar()`/`AplicarTransformacao()` return on the first line without them, a bug that put the
+alignment on the wrong origin passed 157 green tests. If a system draws, the test has to let it
+draw.
 
 ```bash
 # os testes -- e repara que NAO leva -quit: com ele o Unity sai antes de os correr
@@ -159,10 +168,11 @@ FASE 1.
 
 ## Architecture
 
-Twenty-one scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no
-namespaces (plus an editor-only validator under `Editor/`, and `IInteractable`/`PlayerState`,
-which are not `MonoBehaviour`s). All of them hang off the `Player` GameObject or off the object
-they act on. Four clusters:
+Scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no namespaces (plus
+three editor-only scripts under `Editor/`, and `IInteractable`, `PlayerState`, `PhotoData`,
+`PhotoMetadata`, `PhotoDiscovery` and `PhotoAlignment`, which are not `MonoBehaviour`s —
+`PhotoAsset` is a `ScriptableObject`). All the rest hang off the `Player` GameObject or off the
+object they act on. Four clusters:
 
 **Player state** — [`PlayerStateMachine`](Assets/_Project/Scripts/PlayerStateMachine.cs) owns the
 mode stack, the cursor and the `Esc`; [`PlayerState`](Assets/_Project/Scripts/PlayerState.cs) is
@@ -202,7 +212,19 @@ camera's transform+FOV onto `photoCaptureCamera`, calls `Render()` into
 `Assets/_Project/Photography/PhotoRenderTexture.renderTexture`, and `ReadPixels` into a new `Texture2D`.
 [`PhotoAlbumSystem`](Assets/_Project/Scripts/PhotoAlbumSystem.cs) rebuilds a thumbnail grid from that list;
 [`PhotoThumbnail`](Assets/_Project/Scripts/PhotoThumbnail.cs) is an `IPointerClickHandler` that opens
-[`PhotoViewerSystem`](Assets/_Project/Scripts/PhotoViewerSystem.cs).
+[`PhotoViewerSystem`](Assets/_Project/Scripts/PhotoViewerSystem.cs) or marks for comparison.
+
+[`PhotoComparisonSystem`](Assets/_Project/Scripts/PhotoComparisonSystem.cs) holds two photographs
+side by side or overlaid. **Its manipulation and detection are public methods with no input inside
+them**, and `Update` only calls them: `Mouse.current` is null in EditMode, and the rule that
+decides whether the player discovered the story could not be left without a test.
+
+**In overlay, the fixed photograph goes to the centre and the movable one is placed at
+`Posicao × largura`** — normalised by the width on *both* axes, so the space is isotropic and
+rotating in normalised coordinates is rotating in pixels. Getting this wrong is not cosmetic: when
+the fixed photograph stayed where the side-by-side view had left it, the game reported
+`Alinhada = true` with the images more than half a width apart, and never fired where the player
+actually overlapped them.
 
 ## Input
 
@@ -218,8 +240,11 @@ directly. Do not assume a rebind there changes anything; either migrate the poll
 treat the asset as dead weight.
 
 Current bindings: `WASD` + `LShift` sprint + `LeftCtrl` crouch (hold, like the sprint), mouse
-look, `E` interact, `F` photo mode, `Tab` album (see below), LMB shutter / thumbnail click, `Esc`
-back out. The `Esc` is read in `PlayerStateMachine` and nowhere else; everything else is polled by
+look, `E` interact, `F` photo mode, `Tab` album, LMB shutter / thumbnail click, `Esc` back out.
+FASE 5 added: **`Q` flips** a photograph (in hand and in the viewer), **right-click on a thumbnail**
+marks it for comparison (two marks open it), and inside the comparison **`Space`** switches side by
+side / overlay, **drag** moves, **right-drag** rotates and **scroll** scales — and those three do
+nothing in side-by-side, on purpose. The `Esc` is read in `PlayerStateMachine` and nowhere else; everything else is polled by
 the system that owns it.
 
 ## Layers and tags
@@ -232,6 +257,8 @@ Created in FASE 1; before that the project had **zero** custom layers and `tags:
 | 9 `Player` | the player capsule, so the raycast can exclude the player's own colliders |
 | 10 `PhotoOnly` | rendered by the capture camera only; the player camera does not see it |
 | 11 `IgnorePhoto` | rendered by the player camera only — `CameraBody`, the held device, lives here so it does not appear in its own photograph |
+
+World photographs (`PhotoInteractable`) sit on layer 8 like any other interactable.
 
 `UI` (5) and `PhotoOnly` (10) are out of the collision matrix entirely: they are rendering
 categories, not physics ones.
@@ -252,12 +279,26 @@ mask excludes is only what must never stop the ray — the player's own collider
 render-only layers. Who *answers* is decided at the end, by having `IInteractable`.
 
 
-**The album is unreachable.** `PhotoAlbumSystem.OpenAlbum()` ([PhotoAlbumSystem.cs:18](Assets/_Project/Scripts/PhotoAlbumSystem.cs#L18))
-has **no caller anywhere** — not in code, not as a UnityEvent in the scene or prefab.
-`Tab` calls [`PhotographySystem.TogglePhotoAlbum()`](Assets/_Project/Scripts/PhotographySystem.cs#L226),
-which only contains the *already-open* branch and returns without doing anything when the album is
-closed. So `Tab` is a no-op and the whole album/viewer path is dead in play mode. Anything you
-"fix" downstream of it is unverifiable until this is wired.
+**~~The album is unreachable~~ — fixed in FASE 5.** `Tab` opens and closes it, and
+`TogglePhotoAlbum()` is **public on purpose**: `Tab` is read in `Update`, `Keyboard.current` is
+null in EditMode, and while the method was private the dead path could not be tested — which is
+exactly how it stayed dead. The panel is activated **before** `OpenAlbum()`, because
+`PhotoAlbumSystem` lives inside it and its `Update` does not run while it is off; the other order
+left `ViewingAlbum` on the stack with nobody consuming `Esc`.
+
+**Two things that only a screenshot catches.** A `Quad` has a single face: as the inspection's
+photograph it faced away from the camera and vanished when flipped — world photographs are thin
+**cubes**. And an object with the URP default material is white in a beige scene: it was correctly
+positioned, visible and in front of the camera, and did not appear in the image. Run
+`Fase5Capturas.Correr` (see below) before believing a UI change works.
+
+**The scene is assembled by script, not by hand.** `Assets/_Project/Scripts/Editor/Fase5Montagem.cs`
+builds the comparison panel, the viewer's caption and back lines, the world photographs and their
+wiring, and re-links anything that came loose. It is idempotent and must stay that way — an early
+`return` because the main piece already exists is what once left the flash and the photo assets
+unwired. `Fase5Capturas.cs` drives play mode and writes one PNG per screen; it does **not** take
+`-nographics`, and it registers its stepper before `EnterPlaymode` because this project enters
+play mode **without a domain reload**, so `[InitializeOnLoadMethod]` never fires.
 
 **The cursor and `Esc` have a single owner: [`PlayerStateMachine`](Assets/_Project/Scripts/PlayerStateMachine.cs).**
 Fixed in FASE 2. It is the **only** class that writes `Cursor.lockState`/`Cursor.visible` and the

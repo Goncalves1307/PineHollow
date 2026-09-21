@@ -1,7 +1,7 @@
 # Pine Hollow — Estado do desenvolvimento
 
 > Auditoria das 27 fases do `Pine_Hollow_Plano_Completo_Desenvolvimento.md` contra o código real.
-> **Última verificação: 2026-09-21** (revista no fim da FASE 4), contra a árvore de trabalho
+> **Última verificação: 2026-09-21** (revista no fim da FASE 5), contra a árvore de trabalho
 > (`Assets/_Project/Scripts/`, `Assets/_Project/Scenes/Prototype_Player.unity`,
 > `ProjectSettings/`). A FASE 1 fechou nesse dia e os caminhos mudaram: tudo vive em
 > `Assets/_Project/` agora.
@@ -12,16 +12,16 @@
 
 ## Veredicto
 
-Dos **12 milestones** do plano: **3 fechados, o 4.º a meio, 8 por abrir.**
+Dos **12 milestones** do plano: **5 fechados, o 6.º a meio, 6 por abrir.**
 
 | # | Milestone | Estado |
 |---|---|---|
 | 1 | Player funcional | ✅ |
 | 2 | Player + interação | ✅ |
 | 3 | Objeto examinável | ✅ |
-| 4 | Primeira fotografia | ⚠️ parcial — capturar sim, fotografia-como-objecto não |
-| 5 | Duas fotografias + comparação | ❌ |
-| 6 | Alinhamento | ❌ |
+| 4 | Primeira fotografia | ✅ — `PhotoData`, fotografias autoradas, álbum vivo |
+| 5 | Duas fotografias + comparação | ✅ — lado a lado e sobreposição, com escala/posição/rotação |
+| 6 | Alinhamento | ⚠️ parcial — detecção, clarão e gatilho sim; o flashback é FASE 7 |
 | 7 | Primeiro flashback | ❌ |
 | 8 | Alteração da fotografia | ❌ |
 | 9 | Vertical Slice completo | ❌ |
@@ -29,8 +29,9 @@ Dos **12 milestones** do plano: **3 fechados, o 4.º a meio, 8 por abrir.**
 | 11 | Conteúdo narrativo completo | ❌ |
 | 12 | Polimento e lançamento | ❌ |
 
-Código total: **22 scripts, ~2.450 linhas**, duas cenas (`Bootstrap` e `Prototype_Player`),
-mais um validador de editor e **81 testes EditMode** em sete ficheiros.
+Código total: **28 scripts**, duas cenas (`Bootstrap` e `Prototype_Player`), mais três
+scripts de editor (validador da FASE 1, montagem e capturas da FASE 5) e **157 testes
+EditMode** em onze ficheiros.
 
 ---
 
@@ -181,32 +182,57 @@ de rotação é um *loop* com volume em função da velocidade angular, padrão 
 🔴 **Os clips de inspecção foram escolhidos por medição, não de ouvido** — ver o `CREDITOS.md` da
 pasta. Falta o veredicto em play mode.
 
-### FASE 5 — Sistema de fotografia · ~15%, e o número engana
+### FASE 5 — Sistema de fotografia · ✅ fechada (2026-09-21), menos o flashback
 
-**Feito:** capturar para RenderTexture 256×256, preview, grelha do álbum, viewer em ecrã cheio,
-clique na miniatura.
-
-**Por fazer — a checklist inteira da Fase 5:**
+> Revisto no fim da corrida da FASE 5 (task `869f4yfg4`). **O número antigo («~15%, e o número
+> engana») estava certo sobre o protótipo e já não descreve o que existe.**
 
 | Bloco | Itens | Estado |
 |---|---|---|
-| Fotografias | Photo Data, data, local, personagens, metadados, frente, **verso**, imagem | ❌ 0/8 |
-| Inspeção | zoom, rodar, virar, examinar, ler verso | ❌ 0/5 |
-| Comparação | selecionar duas, lado a lado, sobreposição, escala, posição, rotação, **alinhamento** | ❌ 0/7 |
-| Descobertas | estruturas, pessoas, portas, sombras, objetos, símbolos, alterações | ❌ 0/7 |
+| Fotografias | Photo Data, data, local, personagens, metadados, frente, **verso**, imagem | ✅ 8/8 — `PhotoData.cs`, autoradas em `PhotoAsset` |
+| Inspeção | zoom, rodar, virar, examinar, ler verso | ✅ 5/5 — os três primeiros vinham da FASE 4; **virar** e **ler verso** são novos (`Q`) |
+| Comparação | selecionar duas, lado a lado, sobreposição, escala, posição, rotação, **alinhamento** | ✅ 7/7 — `PhotoComparisonSystem.cs` |
+| Descobertas | estruturas, pessoas, portas, sombras, objetos, símbolos, alterações | ⚠️ o tipo e a revelação existem (`PhotoDiscovery.cs`, 7 categorias); **o conteúdo é FASE 18** |
 
-🔴 **O alicerce não suporta o resto.** O que existe é `List<Texture2D>`. Uma `Texture2D` não tem
-data, verso, local nem pessoas — e a comparação e o alinhamento são operações sobre esses
-metadados, não sobre pixéis. Mais código em cima da lista actual não aproxima o alinhamento.
+**O alicerce passou a suportar o resto.** `capturedPhotos` é `List<PhotoData>` e não
+`List<Texture2D>`: data, local, pessoas, metadados, frente, verso e imagem. As **encontradas** são
+`PhotoAsset` autorados no editor (o primeiro `ScriptableObject` do projecto) e entregam sempre uma
+**cópia** — revelar uma descoberta é estado de jogo e escrevê-lo no asset sujava o ficheiro em
+disco. As **tiradas** nascem de `PhotoData.DeCaptura` e distinguem-se por um campo, não por dois
+caminhos de código.
 
-🔴 **Esses 15% também não são jogáveis:** o álbum não abre (`Tab` é no-op, `OpenAlbum()` não tem
-chamador), as fotos são 256×256, vivem só em RAM e nunca são libertadas.
+**O álbum está vivo.** O `Tab` abre e fecha; o painel é activado **antes** do `OpenAlbum()`,
+porque o `PhotoAlbumSystem` vive dentro dele e com ele desligado o `Update` não corre. Clique
+esquerdo na miniatura abre o viewer, direito marca para comparar; ao marcar a segunda, a
+comparação abre e a selecção é consumida.
+
+**O alinhamento é declarado, não adivinhado.** Um `PhotoAlignment` numa fotografia diz com qual
+alinha, em que posição, rotação e escala, e com que tolerância. Basta declarar de um lado: lido do
+outro, o alvo vem invertido a sério (semelhança 2D — a translação também roda e escala). Alinhar
+acende um clarão e revela as descobertas daquele par. O gatilho sai por `ConsumirAlinhamento()`,
+uma vez só, à maneira do `ConsumeBack` — **é o gancho que a FASE 7 vai consumir.**
+
+**Há conteúdo no jogo:** `Fotografia_Estudio_1986` e `Fotografia_Estudio_1994` em
+`Assets/_Project/Photography/`, com alinhamento declarado entre si e uma descoberta que só sai
+desse alinhamento. O verso de 1986 é canon à letra. Estão na cena como objectos apanháveis
+(`PhotoInteractable`), em cubos finos de 18×12 cm — **um quad tem uma face só e desaparecia ao
+virar**. Sem arte: levam um material provisório da paleta (`Fotografia_SemImagem.mat`).
+
+🔴 **O que continua por fazer nesta fase:** o **flashback** que o alinhamento dispara é a FASE 7 e
+não existe — nenhum script tem noção de época. E o bloco «Descobertas» tem o mecanismo mas só uma
+descoberta autorada.
+
+⚠️ **A captura de ecrã em jogo continua a 256×256 e só em RAM.** As texturas passam a ser
+destruídas no `OnDestroy` (as autoradas não se tocam, são assets), mas a lista continua a crescer
+sem limite dentro de uma sessão. As **autoradas** têm a resolução validada a 2048×1368 — um aviso
+no `OnValidate`, que nunca dispara enquanto não houver imagem nenhuma.
 
 ### FASES 6 a 27 · 0%
 
 Investigação/journal/board · world state e flashbacks · vertical slice · blockout · casa · Ethan ·
 NPCs · fábrica · túneis · câmara subterrânea · capítulos · áudio · arte · iluminação · UI · saves ·
-optimização · QA · polimento · playtests · build · finais. **Nada começado.**
+optimização · QA · polimento · playtests · build · finais. **Nada começado** — mas a FASE 7 já tem
+por onde entrar: `PhotoComparisonSystem.ConsumirAlinhamento()`.
 
 ---
 
@@ -245,10 +271,16 @@ Barata agora, cara depois — cada uma destas compõe com o conteúdo que vier a
       `ConsumeBack(o-seu-modo)`: só o modo no topo da pilha recebe `true`. Eram **7 linhas em 4
       scripts** (não 5). A máquina corre a `[DefaultExecutionOrder(-100)]` para registar o `Esc`
       antes de qualquer consumidor.
-- [ ] Ligar o álbum, ou tirar o `Tab` até haver o que mostrar. **`OpenAlbum()` continua sem
-      chamador** e o `Tab` só fecha; abrir é FASE 5, atrás do `PhotoData`.
-- [ ] Layer mask no raycast de interação (+ decidir `QueryTriggerInteraction`).
+- [x] **Ligar o álbum** — FASE 5. O `Tab` abre e fecha, e o painel é activado antes do
+      `OpenAlbum()`. Era o defeito que tornava inverificável tudo o que estava a jusante.
+- [x] Layer mask no raycast de interação (+ `QueryTriggerInteraction`) — FASE 3.
 - [x] **Meter o `Prototype_Player.unity` nas build settings** — já estava feito desde `00df4f8`
       (FASE 1) e este ficheiro continuava a pedi-lo.
-- [ ] `[SerializeField] InspectionSystem` no `InspectionInteractable`, em vez do
-      `FindFirstObjectByType` por interacção (é o único aviso de compilação do projecto, CS0618).
+- [x] `[SerializeField] InspectionSystem` no `InspectionInteractable` — FASE 4. O projecto
+      compila com **zero avisos** e é assim que se mantém.
+- [ ] **O contraste da linha de descrição da inspecção.** Texto claro sobre o chão bege da cena:
+      a captura da FASE 5 mostrou que não se lê. Tentou-se um fundo escuro e reverteu-se — um
+      filho do texto desenha-se por cima dele, e um irmão fica inactivo porque quem liga aquela
+      linha é o `InspectionSystem` e ele não sabe do fundo. Resolve-se dando-lhe a referência.
+- [ ] **A lista de capturas cresce sem limite dentro de uma sessão.** Só é libertada no
+      `OnDestroy`.
