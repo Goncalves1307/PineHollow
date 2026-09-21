@@ -39,7 +39,7 @@ O núcleo mecânico do Pine Hollow é **comparar uma fotografia com o mundo** e 
    Esses contornos têm de ler-se a contraluz e ao longe.
 3. **Nada de pós-processamento que mova a imagem.** Aberração cromática forte, distorção de lente e
    motion blur **sabotam o alinhamento** — o jogador alinha contra uma imagem que a lente deslocou.
-4. **O «impossível» precisa do «normal».** `GDD:82` conta com «fotografias impossíveis»: uma imagem só
+4. **O «impossível» precisa do «normal».** `GDD:87` conta com «fotografias impossíveis»: uma imagem só
    choca se o mundo à volta for calmo e consistente. O estranho paga-se com normalidade acumulada.
 
 ## 3. As três direcções — escolhe-se uma
@@ -63,8 +63,10 @@ luz do céu e é sempre a mesma.
 O exterior vive numa luz fria e baixa, quase sem cor; **toda a cor quente vem de fontes dentro do mundo**
 — janelas acesas, candeeiros de rua, a lanterna, o brilho da fábrica. Contraste alto.
 
-- **Custo: médio-alto**, e bate no orçamento: `Pine_Hollow_Producao.md` §1.4 permite **2 luzes com sombra
-  em tempo real** ao mesmo tempo. Esta direcção quer muitas mais; obriga a baked com precisão.
+- **Custo: alto, e pior do que parece.** `Pine_Hollow_Producao.md` §1.4 permite **2 luzes com sombra em
+  tempo real** ao mesmo tempo — e B quer dezenas, em exterior. Pior: em Forward+ o motor **não trava** o
+  número de luzes que iluminam o mesmo pixel (§1.4), por isso uma rua de candeeiros não dá erro, dá
+  quebra de fps. Obriga a baked com precisão, e a contar luzes à mão.
 - **Mecânica: arriscada.** É a que melhor serve a estranheza do `GDD:74-92` — mas viola a regra 1 em
   metade dos sítios, e o alinhamento nocturno é desconfortável.
 - **Nota:** funciona muito melhor como **direcção de momento** (o Capítulo em que a cidade se esvazia)
@@ -138,7 +140,7 @@ já decidiu esta parte; o que fica em aberto é o sabor.
 **1986** é quente e habitado: a fábrica trabalha, as janelas estão acesas, a tinta é recente, a
 vegetação está cortada. **2026** é frio e encoberto: a fábrica está parada, as janelas cegas, a tinta
 lascada, a floresta entrou pelos quintais. É a leitura que `Pine_Hollow_Historia.md:237-243` já dá em
-prosa — «a fábrica está ativa, as casas estão habitadas» — traduzida em regras.
+prosa — «A fábrica está ativa.» (`:239`), «As casas estão habitadas.» (`:241`) — traduzida em regras.
 
 **Custo:** ~1,3× por interior reutilizado, em vez de 2×. **Mas** — ver `Pine_Hollow_Producao.md` §1.8 —
 distinguir épocas por luz obriga a **dois conjuntos de lightmaps** por interior, e é isso que decide se

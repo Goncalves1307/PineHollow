@@ -89,8 +89,8 @@ A prioridade será sempre ter uma versão jogável antes de aumentar a escala.
 - [x] Estrutura narrativa
 - [ ] Referências visuais finais — quadro de decisão em `Pine_Hollow_Direccao_Artistica.md`,
       à espera de escolha; as imagens ainda não foram recolhidas
-- [~] Direção artística final — `Pine_Hollow_Direccao_Artistica.md`: restrições e regra 1986/2026
-      escritas, **direcção por escolher** entre as três propostas
+- [ ] Direção artística final — `Pine_Hollow_Direccao_Artistica.md`: restrições e regra 1986/2026
+      escritas, **falta escolher** entre as três direcções propostas
 - [x] Lista final de assets — `Pine_Hollow_Producao.md` §2
 - [x] Limites técnicos — `Pine_Hollow_Producao.md` §1
 

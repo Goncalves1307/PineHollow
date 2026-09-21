@@ -14,8 +14,9 @@
 
 ### 1.0 O que já está fixado no projecto — e o que disso foi decisão
 
-Quase nada foi decidido: o que está no projecto é o template do URP com dois ajustes. Importa
-distinguir, porque **o template já está a fixar o orçamento por omissão**.
+Quase nada foi decidido: o que está no projecto é o template do URP tal como veio, com a única
+excepção do colour space. Importa distinguir, porque **o template já está a fixar o orçamento por
+omissão**.
 
 | Definição | Valor hoje | Onde | É decisão? |
 |---|---|---|---|
@@ -25,11 +26,12 @@ distinguir, porque **o template já está a fixar o orçamento por omissão**.
 | Render scale | 1, sem upscaler | `PC_RPAsset:29-30` | ❌ omissão |
 | Shadow distance | **50 m**, 4 cascades | `PC_RPAsset:57-58` | ❌ omissão |
 | Shadowmap | 2048 principal / 2048 adicionais | `PC_RPAsset:46,50` | ❌ omissão |
-| Luzes adicionais por objecto | 4 | `PC_RPAsset:48` | ❌ omissão |
+| Luzes adicionais por objecto | 4 | `PC_RPAsset:48` | ❌ omissão — e **inerte em Forward+**, ver `§1.4` |
 | Depth + Opaque texture | **ambas ligadas** | `PC_RPAsset:22-23` | ❌ omissão, e custa por frame |
 | SSAO | ligada, intensidade 0.4 | `PC_Renderer.asset:71+` | ❌ omissão |
 | VSync | **desligado** nos dois níveis | `QualitySettings.asset:32,86` | ❌ omissão |
-| Resolução de arranque | **1024×768**, janela não redimensionável | `ProjectSettings.asset:44-45,104` | ❌ omissão, 4:3 num jogo de PC |
+| Modo de ecrã | borderless em resolução nativa | `ProjectSettings.asset:88,116` | ✅ já está certo |
+| Janela redimensionável | **não** | `ProjectSettings.asset:104` | ❌ omissão |
 | Níveis de qualidade | 2: `Mobile` e `PC` | `QualitySettings.asset:10,64` | ❌ template — o `Mobile` não serve este jogo |
 | APIs gráficas | Windows D3D11+D3D12, Android, iOS | `ProjectSettings.asset:482-491` | ❌ **Linux não tem entrada**, e é a máquina de desenvolvimento |
 
@@ -55,14 +57,22 @@ manter um `Mobile_RPAsset` que alguém há-de editar por engano.
 | Cenário | Resolução | Definições | Alvo |
 |---|---|---|---|
 | Máquina **recomendada** | 1920×1080 | Altas | **60 fps** estáveis |
-| Máquina **mínima** | 1920×1080 | Baixas | **30 fps**, nunca abaixo de 25 |
+| Máquina **mínima** | 1920×1080 | Baixas | **30 fps**, nunca abaixo de 20 (ver nota do VSync) |
 
 60 fps é o alvo de projecto porque o jogo é em 1.ª pessoa com mouse look: abaixo disso o olhar torna-se
-desconfortável, e não há combate a justificar exigência maior. **Resolução de arranque: 1920×1080,
-janela redimensionável, fullscreen borderless** — substitui o 1024×768 4:3 do template.
+desconfortável, e não há combate a justificar exigência maior.
+
+**Modo de ecrã: já está certo e não se mexe.** `ProjectSettings.asset:116` é `fullscreenMode: 1`
+(borderless) e `:88` é `defaultIsNativeResolution: 1` — a build arranca em ecrã inteiro na resolução
+nativa do monitor. O `defaultScreenWidth: 1024` × `768` de `:44-45` **só se aplica em modo janela**, e
+por isso não é o problema que parecia. O que falta mesmo é **`resizableWindow: 0`** (`:104`): quem jogar
+em janela não a consegue redimensionar.
 
 **VSync** fica ligado por omissão em ecrã inteiro (hoje está desligado nos dois níveis) e exposto nas
 definições. Num jogo lento e contemplativo, o tearing custa mais do que a latência ganha.
+⚠️ Com VSync a 60 Hz as taxas possíveis são **60 / 30 / 20**, e não há 25 — por isso o mínimo aceitável
+na máquina mínima é **20 fps**, ou o VSync passa a adaptativo nos presets baixos. É uma das decisões
+de `§1.9`.
 
 ### 1.3 Máquina mínima e recomendada
 
@@ -71,33 +81,55 @@ definições. Num jogo lento e contemplativo, o tearing custa mais do que a lat�
 | CPU | 4 núcleos, ~i5-8400 / Ryzen 5 2600 | 6 núcleos, ~i5-12400 / Ryzen 5 5600 |
 | GPU | 6 GB VRAM, ~GTX 1060 6GB / RX 580 8GB | 8-12 GB, ~RTX 3060 / RX 6600 |
 | RAM | 16 GB | 16 GB |
-| Disco | SSD (o mundo carrega por streaming) | SSD NVMe |
+| Disco | SSD (o mundo carrega por cenas aditivas) | SSD NVMe |
 | SO | Windows 10 64-bit / Linux com Vulkan | idem |
 
 A mínima é deliberadamente uma placa de 2016-2017: é o que define os orçamentos abaixo, e é o que
-permite que o jogo exista fora de máquinas recentes. **Todos os números das secções seguintes são para
-a máquina mínima** — a recomendada é folga, não é outro orçamento.
+permite que o jogo exista fora de máquinas recentes. **Os orçamentos de `§1.4` a `§1.7` são para a
+máquina mínima** — a recomendada é folga, não é outro orçamento.
 
 ### 1.4 Orçamento por frame
 
-A 60 fps há **16,6 ms** por frame. Repartição alvo, medida separadamente no Profiler:
+Dois orçamentos, porque `§1.2` tem dois alvos. **O que manda no conteúdo é o da máquina mínima** — é
+nele que se corta geometria; o da recomendada é o que se verifica no fim.
 
-| | Alvo | Limite |
+| | Máquina mínima, 30 fps (**33,3 ms**) | Recomendada, 60 fps (**16,6 ms**) |
 |---|---|---|
-| GPU | ≤ 12 ms | 14 ms |
-| CPU, thread principal | ≤ 8 ms | 10 ms |
-| Render thread | ≤ 8 ms | 10 ms |
+| GPU | ≤ 26 ms | ≤ 12 ms |
+| CPU, thread principal | ≤ 20 ms | ≤ 8 ms |
+| Render thread | ≤ 20 ms | ≤ 8 ms |
+
+Medidos separadamente no Profiler, não somados: correm em paralelo.
 
 **Geometria visível por frame:**
 
 | | Triângulos | Batches (SRP Batcher ligado) |
 |---|---|---|
-| Exterior (floresta, vila, estrada) | ≤ 2 000 000 | ≤ 1 500 |
-| Interior (casa, estúdio, fábrica) | ≤ 1 200 000 | ≤ 800 |
+| Exterior (floresta, vila, estrada) | ≤ 2 000 000 | ≤ 400 SetPass |
+| Interior (casa, estúdio, fábrica) | ≤ 1 200 000 | ≤ 250 SetPass |
 
-**Luzes:** 1 direccional com sombra + **no máximo 4 luzes adicionais por objecto** (é o que o
-`PC_RPAsset:48` já impõe). Luzes adicionais com sombra em tempo real: no máximo 2 visíveis ao mesmo
-tempo, e só em interiores. Tudo o resto é baked ou sem sombra.
+A métrica são **SetPass calls**, não batches: com o SRP Batcher ligado (`PC_RPAsset:72`) o número de
+batches deixa de ser o que dói.
+
+⚠️ **E o que mata a máquina mínima numa floresta não é a contagem de triângulos — é o overdraw.**
+Folhagem alpha-tested a 1080p enche a placa a desenhar o mesmo pixel muitas vezes, e o
+`m_EnableLODCrossFade: 1` (`PC_RPAsset:33`) acrescenta mais alpha-test nas transições de LOD.
+**Alvo: ≤ 3× de overdraw a 1080p em exterior**, medido no modo de visualização de overdraw. Sem este
+número, os 2 M de triângulos dão uma falsa sensação de folga.
+
+**Luzes:** 1 direccional com sombra + **no máximo 4 luzes adicionais a iluminar o mesmo pixel**.
+
+🔴 **Este limite é de disciplina, não de motor.** O `m_AdditionalLightsPerObjectLimit: 4` do
+`PC_RPAsset:48` **não o impõe em Forward+**: com `m_RenderingMode: 2` (`PC_Renderer.asset:56`) o URP
+liga o *cluster light loop*, e aí `GetAdditionalLight()` indexa o cluster directamente em vez de passar
+pela lista por objecto — `GetAdditionalLightsCount()` devolve `0` e a contagem por objecto deixa de
+existir. Verificado no pacote instalado: `UniversalRenderer.cs:122`, `RealtimeLights.hlsl:247-251` e
+`:292-297`. **Consequência prática:** vinte candeeiros numa rua acendem os vinte que caírem no cluster,
+e o custo por pixel dispara sem nenhum aviso do motor. Quem iluminar tem de contar à mão — ou a FASE 1
+troca Forward+ por Forward, onde o limite volta a valer (`§1.9`).
+
+Luzes adicionais com sombra em tempo real: no máximo **2 visíveis ao mesmo tempo, em qualquer sítio**
+— interior ou exterior. Tudo o resto é baked ou sem sombra.
 
 ### 1.5 Texturas
 
@@ -110,6 +142,12 @@ tempo, e só em interiores. Tudo o resto é baked ou sem sombra.
 | Detalhe e máscaras | 256 | sujidade, decalques |
 
 Compressão: BC7 para albedo de props narrativos, BC1 para o resto, **BC5 para normal maps**.
+
+⚠️ **Excepção obrigatória: tudo o que tem máscara de recorte não vai a BC1.** BC1 só tem 1 bit de
+alpha, e `§2.2` encomenda 8-12 espécies de rasteira, 4 arbustos e 4-6 de árvore — todos alpha-tested.
+Em BC1 a folha sai recortada aos blocos de 4×4, ou o importador cai sozinho para BC3/RGBA32 e rebenta
+o orçamento de `§1.7` sem ninguém dar conta. **Folhagem e recortes: BC7**, ou BC3 se for preciso poupar.
+
 Mipmaps sempre ligados — num mundo de 3 km² são eles que salvam a largura de banda.
 
 ### 1.6 Fotografias — o limite que hoje contradiz o design
@@ -118,21 +156,27 @@ Mipmaps sempre ligados — num mundo de 3 km² são eles que salvam a largura de
 `photoRenderTexture.width`, e o 256 vem do asset `Assets/Photography/PhotoRenderTexture.renderTexture:15-16`.
 É **dado**, e portanto corrige-se sem tocar em código.
 
-256×256 é incompatível com o jogo que o GDD descreve: as fotografias são examinadas em ecrã inteiro
-(`GDD:349`), comparadas lado a lado e **alinhadas** (`GDD:376`) — e a comparação vive de detalhes que a
-256 não existem. Alvo:
+256×256 é incompatível com o jogo que o GDD descreve: sobre as fotografias o jogador **faz zoom**
+(`GDD:359`), **compara** (`GDD:360`) e **alinha** (`GDD:376`, secção inteira) — e tudo isso vive de
+detalhes que a 256 não existem. Alvo:
 
 | Uso | Resolução | Rácio |
 |---|---|---|
-| Fotografia-objecto (encontrada no mundo, é a do vertical slice) | **2048** na maior dimensão | 3:2 (35 mm) |
-| Verso da fotografia (textura própria, com a escrita) | 1024 na maior dimensão | 3:2 |
-| Captura in-game, quando a máquina existir | 1024 na maior dimensão | 3:2 |
+| Fotografia-objecto (encontrada no mundo, é a do vertical slice) | **2048×1368** |
+| Verso da fotografia (textura própria, com a escrita) | 1024×688 |
+| Captura in-game, quando a máquina existir | 1024×688 |
 
-O 3:2 é o rácio de 35 mm — é o que uma fotografia de 1986 teria. **As fotografias nunca são quadradas.**
+O rácio é o de 35 mm, ~3:2 — é o que uma fotografia de 1986 teria. **As fotografias nunca são quadradas.**
+
+⚠️ **As dimensões são múltiplos de 4 de propósito.** O 3:2 exacto daria 2048×1365 e 1024×683, e a
+compressão em bloco (BC1/BC5/BC7) exige blocos de 4×4: uma textura de 2048×1365 importa **sem
+compressão** — ~11 MB em RGBA32 em vez de ~2,8 MB em BC7. Com frente, verso e versão alterada por
+fotografia, isso come o orçamento de `§1.7` em poucas imagens.
 
 ⚠️ Duas restrições que vêm do código e não da arte, ambas fora desta task:
-- a câmara de captura tem `m_RenderPostProcessing: 0` (`Prototype_Player.unity:2069`), portanto capta a
-  imagem **crua** — qualquer look próprio das fotografias é trabalho de código;
+- a câmara de captura (`PhotoCaptureCamera`, `Prototype_Player.unity:206`) tem
+  `m_RenderPostProcessing: 0` (`:235`), portanto capta a imagem **crua** — qualquer look próprio das
+  fotografias é trabalho de código, na **FASE 5**, e depende de o `PhotoData` existir primeiro;
 - as `Texture2D` capturadas nunca são libertadas (vazam por disparo). A 2048 o vazamento passa de
   incómodo a problema: 64× mais memória por foto.
 
@@ -141,9 +185,13 @@ O 3:2 é o rácio de 35 mm — é o que uma fotografia de 1986 teria. **As fotog
 | | Alvo na máquina mínima |
 |---|---|
 | VRAM total | ≤ 4 GB (placa de 6 GB) |
-| Só texturas | ≤ 2,5 GB |
+| Só texturas | ≤ 2,5 GB **residentes** |
 | RAM do processo | ≤ 6 GB |
 | Tempo de carregamento até jogável | ≤ 20 s em SSD |
+
+⚠️ `streamingMipmapsActive: 0` nos dois níveis de qualidade (`QualitySettings.asset:40,94`): **não há
+texture streaming**, logo 2,5 GB são 2,5 GB em memória ao mesmo tempo. Ligar o streaming é uma das
+decisões de `§1.9` — e se não for ligado, este número tem de descer.
 
 ### 1.8 Os 3 km² contra os 50 m de sombra — a restrição que manda em tudo
 
@@ -158,7 +206,8 @@ decisão de arte tem de vir **antes** do blockout e não depois.
 
 O que **está** decidido aqui: **não há streaming nem LODs por agora**, e não há nada no projecto que os
 implique — zero terrenos, zero Addressables, zero LODGroups (não há um único modelo). O mundo de 3 km²
-será dividido em cenas carregadas aditivamente, e é na FASE 22 (`Plano:667-675`) que isso se resolve.
+será dividido em cenas carregadas aditivamente, e é na FASE 22 que isso se resolve — `Plano:675`
+(occlusion culling), `:676` (LOD) e `:681` (streaming), todos por abrir.
 Consequência para a lista de assets: **todo o modelo entregue traz LODs**, mesmo antes de haver sistema
 que os use, porque acrescentá-los depois é refazer o asset.
 
@@ -167,15 +216,21 @@ que os use, porque acrescentá-los depois é refazer o asset.
 A subtask `[Fase 1] Definições gráficas e níveis de qualidade (URP)` escolhe as definições; este
 documento diz o que elas têm de cumprir. Ela decide, dentro destes alvos:
 
-- **MSAA vs pós-processo.** Hoje MSAA está desligado e não há AA nenhum. Com Forward+ o MSAA é viável;
-  com SSAO ligada e o mundo cheio de folhagem, o TAA costuma sair melhor. Quem decidir mede.
+- **MSAA vs pós-processo.** Hoje MSAA está desligado e não há AA nenhum. Com SSAO em DepthNormals
+  (`PC_Renderer.asset:78`) já corre um prepass, e empilhar MSAA por cima disso numa placa de 2016 é
+  caro; num mundo de folhagem alpha-tested o TAA resolve melhor o mesmo problema. Quem decidir mede.
 - **Forward+ ou Deferred.** Forward+ hoje. Mudar depois obriga a revisitar todos os materiais — decidir
   **antes** de existir arte, não depois.
-- **Shadow distance e cascades** (hoje 50 m / 4). É a decisão que amarra os 3 km².
+- **Shadow distance e cascades** (hoje 50 m / 4). É a decisão que amarra os 3 km² — e 50 m é curto
+  para um jogo de olhar longe: a linha onde as sombras acabam vê-se a andar. 80-100 m com 4 cascades
+  ainda cabe no orçamento e vale a medição.
 - **Render scale e upscaler** (hoje 1, nenhum). É o que dá ou tira folga na máquina mínima.
 - **`m_RequireOpaqueTexture`** (hoje ligada): custa por frame e só é precisa se houver água ou refracção.
 - **Número de níveis de qualidade** e o fim do `Mobile`.
+- **Ligar ou não o texture streaming** (hoje desligado) — decide se o tecto de `§1.7` é realista.
+- **VSync adaptativo nos presets baixos**, ou aceitar 20 fps como mínimo (ver nota de `§1.2`).
 - **Resolver a divergência 40/50 m** entre `QualitySettings` e `PC_RPAsset`.
+- **`resizableWindow`** (`ProjectSettings.asset:104`), hoje a `0`.
 
 ### 1.10 Como se verifica que os alvos se cumprem
 
@@ -183,7 +238,9 @@ Nenhum destes números vale sem medição. Quando houver blockout com arte (FASE
 
 1. Cena de exterior mais densa (vila + floresta) e cena de interior mais carregada (a fábrica), ambas
    percorridas com o Profiler ligado, na máquina mínima ou com render scale equivalente.
-2. Ler **GPU frame time**, **SetPass calls** e **triângulos** no Frame Debugger, comparar com 1.4.
+2. Ler **GPU frame time** no Profiler e **SetPass calls** e **triângulos** no painel *Stats* da Game
+   view — o Frame Debugger mostra a ordem dos passes, não estes números. Comparar com `§1.4`, e medir o
+   overdraw no modo de visualização próprio.
 3. Memory Profiler para VRAM e texturas, comparar com 1.7.
 4. Se falhar, corta-se **detalhe de props** antes de cortar distância de visão: o jogo é de olhar longe.
 
@@ -201,9 +258,12 @@ depois do vertical slice. Nada aqui tem preço ou licença confirmados: os termo
 mudaram nos últimos anos e **não foram verificados**. Antes de contar com qualquer candidato, confirmar
 preço e licença, e escrevê-los na linha.
 
+**Cada linha 💰 leva preço e licença próprios**, nas colunas `€` e `Lic.`. Enquanto ninguém os
+confirmar, ambas ficam a `?` — e um `?` significa *não contes com isto*, não *é grátis*.
+
 | Marca | Significa |
 |---|---|
-| 💰 | **Candidato a compra** — genérico e repetido. Preço e licença **por confirmar**. |
+| 💰 | **Candidato a compra** — genérico e repetido. |
 | 🔨 | **Fazer** — narrativo e único. Nenhum pack o tem, e comprá-lo seria comprar outro jogo. |
 | ♻️ | **Derivar** — sai de outro asset desta lista com retoque, não nasce do zero. |
 
@@ -235,49 +295,58 @@ documento tem, e é a única que interessa nos próximos meses.
 
 ### 2.2 Mundo — a checklist da `Plano:608-616`, fechada
 
-| Item | Quantidade alvo | | Nota |
-|---|---|---|---|
-| Vegetação | 8-12 espécies de rasteira + 4 arbustos | 💰 | com variação de estação |
-| Árvores | 4-6 espécies, 3 idades cada | 💰 | é o maior custo de desempenho do jogo |
-| Rochas | 1 conjunto de 10-15, granito de montanha | 💰 | |
-| Estradas | asfalto, terra batida, trilho, mais bermas e juntas | 💰 superfícies · 🔨 traçado | |
-| Lama | 3-4 superfícies, com poça e transição | 💰 | o «húmido» do GDD vive aqui |
-| Água | lago, rio, poças — shader partilhado | 💰 | ⚠️ obriga a `m_RequireOpaqueTexture` (`§1.0`) |
-| Montanha | superfícies de encosta, escarpa, neve de cume | 💰 | |
-| Construções | kit modular: paredes, telhados, caixilhos, portas, alpendres | 💰 kit · 🔨 os 4 edifícios narrativos | ver `§2.4` |
+| Item | Quantidade alvo | | € | Lic. | Nota |
+|---|---|---|---|---|---|
+| Vegetação | 8-12 espécies de rasteira + 4 arbustos | 💰 | ? | ? | com variação de estação; **BC7, não BC1** (`§1.5`) |
+| Árvores | 4-6 espécies, 3 idades cada | 💰 | ? | ? | é o maior custo de desempenho do jogo |
+| Rochas | 1 conjunto de 10-15, granito de montanha | 💰 | ? | ? | |
+| Estradas | asfalto, terra batida, trilho, mais bermas e juntas | 💰 superfícies · 🔨 traçado | ? | ? | |
+| Lama | 3-4 superfícies, com poça e transição | 💰 | ? | ? | o «húmido» do GDD vive aqui |
+| Água | lago, rio, poças — shader partilhado | 💰 | ? | ? | ⚠️ obriga a `m_RequireOpaqueTexture` (`§1.0`) |
+| Montanha | superfícies de encosta, escarpa, neve de cume | 💰 | ? | ? | |
+| Construções | kit modular: paredes, telhados, caixilhos, portas, alpendres | 💰 kit · 🔨 os 4 edifícios narrativos | ? | ? | ver `§2.4` |
 
 ### 2.3 Props — a checklist da `Plano:618-626`, fechada
 
-| Item | Quantidade alvo | | Nota |
-|---|---|---|---|
-| Móveis | 1 conjunto de casa dos anos 60-80, ~30 peças | 💰 | serve as duas épocas: as casas não se remobilaram |
-| Livros | fechados (💰) e **os que se lêem** (🔨) | ambos | os legíveis são documentos, não decoração |
-| Computadores | 1 moderno (2026) + 1 terminal de 1986 | 💰 | o de 1986 é props-marcador da época |
-| Telefones | fixo de parede (1986) + telemóvel (2026) | 💰 · ♻️ | |
-| Ferramentas | oficina e fábrica, ~20 peças | 💰 | |
-| **Equipamento fotográfico** | máquina, lentes, tripé, ampliador, tinas, negativos, álbum | 🔨 | é a identidade do jogo — não se compra |
-| Objetos de 1986 | ~10 marcadores por interior (`Direcção Artística §5`) | 💰 · 🔨 | |
-| Objetos modernos | idem, para 2026 | 💰 | |
+| Item | Quantidade alvo | | € | Lic. | Nota |
+|---|---|---|---|---|---|
+| Móveis | 1 conjunto de casa dos anos 60-80, ~30 peças | 💰 | ? | ? | serve as duas épocas: as casas não se remobilaram |
+| Livros | fechados (💰) e **os que se lêem** (🔨) | ambos | ? | ? | os legíveis são documentos, não decoração |
+| Computadores | 1 moderno (2026) + 1 terminal de 1986 | 💰 | ? | ? | o de 1986 é props-marcador da época |
+| Telefones | fixo de parede (1986) + telemóvel (2026) | 💰 · ♻️ | ? | ? | |
+| Ferramentas | oficina e fábrica, ~20 peças | 💰 | ? | ? | |
+| **Equipamento fotográfico** | máquina, lentes, tripé, ampliador, tinas, negativos, álbum | 🔨 | — | — | é a identidade do jogo — não se compra |
+| Objetos de 1986 | ~10 marcadores por interior (`Direcção Artística §5`) | 💰 · 🔨 | ? | ? | |
+| Objetos modernos | idem, para 2026 | 💰 | ? | ? | |
 
 ### 2.4 Os 22 locais do blockout (`Plano:343-364`)
 
 Nem todos custam o mesmo. Três grupos:
 
-**🔨 Narrativos — feitos à mão, um a um** (5): Casa do protagonista, Fábrica abandonada, Câmara
-subterrânea, Cabana, Estúdio fotográfico (dentro da casa). São eles o jogo; nenhum pack os tem e cada um
-existe **em duas épocas**.
+**🔨 Narrativos — feitos à mão, um a um** (4): Casa, Fábrica, Cabana, Câmara subterrânea. São eles o
+jogo; nenhum pack os tem e cada um existe **em duas épocas**. (O **estúdio fotográfico** é o quinto
+espaço feito à mão, mas vive *dentro* da Casa — por isso não conta como local próprio dos 22.)
 
 **💰+♻️ Kit modular — construídos a partir do mesmo conjunto** (10): Centro, Café, Mercearia, Polícia,
 Câmara municipal, Biblioteca, Igreja, Motel, Casas, Cemitério. Um kit de construção de vila americana
 pequena resolve os dez; a identidade de cada um vem da placa, da montra e dos props, não da geometria.
 
-**💰 Terreno e natureza** (7): Lago, Rio, Ponte, Floresta, Trilhos, Montanha, Miradouro, mais os Túneis
-(💰 kit de túnel + 🔨 os troços que a história usa).
+**💰 Terreno e natureza** (8): Lago, Rio, Ponte, Floresta, Trilhos, Montanha, Miradouro e os Túneis
+(estes 💰 kit de túnel + 🔨 os troços que a história usa).
 
-⚠️ **Discrepância entre as duas listas de locais.** `Plano:343-364` tem 22 entradas e `GDD:150-169` tem
-20, e não são a mesma lista: o GDD tem **Antiga torre/estação meteorológica** e **Zona montanhosa**, que
-o Plano não tem; o Plano tem **Trilhos** e **Miradouro**, que o GDD não tem. Alinhar as duas antes do
-blockout — é trabalho do mapa conceptual, que está por fazer (ver `ESTADO.md`).
+**4 + 10 + 8 = 22.**
+
+⚠️ **As duas listas de locais não coincidem.** `Plano:343-364` tem 22 entradas e `GDD:150-169` tem 20.
+**19 são a mesma coisa com nomes diferentes** — Grocery store/Mercearia, Esquadra/Polícia, Town
+Hall/Câmara municipal, Lake Hollow/Lago, Zona montanhosa/Montanha. O que difere mesmo:
+
+| Só no GDD | Só no Plano |
+|---|---|
+| Antiga torre/estação meteorológica (`GDD:169`) | **Casas** (`Plano:352`) · Trilhos (`:360`) · Miradouro (`:362`) |
+
+19 + 1 = 20 e 19 + 3 = 22. **O que importa é o «Casas»**: são as casas genéricas da vila, uma família
+inteira de assets que só existe num dos lados. Alinhar antes do blockout — é trabalho do mapa
+conceptual, que está por fazer (ver `ESTADO.md`).
 
 ### 2.5 Personagens — a lista está bloqueada
 
@@ -285,7 +354,7 @@ As quatro principais estão escritas (`GDD:207-264`). Os secundários **não**: 
 «**Possíveis** NPCs» — 8 bullets sem nome, sem idade, sem relação. **Não há cast para listar**, e por isso
 esta secção fica deliberadamente vazia.
 
-O que se sabe: 🔨 **Thomas em 1986** é obrigatório para o vertical slice (`GDD:776`) e é o único
+O que se sabe: 🔨 **Thomas em 1986** é obrigatório para o vertical slice (`GDD:780`) e é o único
 personagem visível de que o slice precisa. Um humano realista credível é, a solo, o asset mais caro do
 projecto — e o único cuja alternativa (nunca o mostrar de corpo inteiro, resolvê-lo por voz, silhueta e
 fotografia) **é melhor design e mais barata**. Fica como decisão, não como compra.

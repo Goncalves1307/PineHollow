@@ -50,9 +50,10 @@ Código total: **11 scripts, ~840 linhas**, uma cena jogável.
 
 Continua a não existir um único asset de arte no projecto.
 
-🔴 **Duas listas de locais que não coincidem:** `Plano:343-364` tem 22 e `GDD:150-169` tem 20 — o GDD
-tem torre meteorológica e zona montanhosa que o plano não tem; o plano tem trilhos e miradouro que o
-GDD não tem. Alinhar antes do blockout.
+🔴 **Duas listas de locais que não coincidem:** `Plano:343-364` tem 22 e `GDD:150-169` tem 20. Dezanove
+são a mesma coisa com nomes diferentes (Lake Hollow/Lago, Zona montanhosa/Montanha, Town Hall/Câmara
+municipal…). Só no GDD: **torre meteorológica**. Só no plano: **Casas**, **Trilhos**, **Miradouro** — e
+«Casas» são todas as casas genéricas da vila, uma família inteira de assets. Alinhar antes do blockout.
 
 ⚠️ **Os limites técnicos foram derivados, não medidos.** Nada foi corrido em play mode. A primeira
 medição real com arte na cena manda sobre os números de `Producao.md` §1.4.
