@@ -46,7 +46,16 @@ public class InspectionSystem : MonoBehaviour
     private Quaternion originalRotation;
     private Transform originalParent;
 
+    // O que está escrito nas costas do que se tem na mão. Vazio na esmagadora
+    // maioria dos objectos: só as fotografias têm verso.
+    private string descricaoActual;
+    private string versoActual;
+
     public bool IsInspecting => inspectedObject != null;
+
+    public bool TemVerso => !string.IsNullOrWhiteSpace(versoActual);
+
+    public bool AMostrarVerso { get; private set; }
 
     private void Awake()
     {
@@ -83,9 +92,10 @@ public class InspectionSystem : MonoBehaviour
         ShowUI(false, null);
     }
 
-    // A descrição é opcional de propósito: o PhotoInteractable da FASE 5 vai
-    // reutilizar este sistema e a assinatura antiga continua a compilar.
-    public void Inspect(GameObject target, string descricao = null)
+    // A descrição e o verso são opcionais de propósito: quem já chamava isto
+    // com um argumento só continua a compilar. O verso é o que a FASE 5
+    // trouxe — uma fotografia tem duas faces, um cinzeiro não.
+    public void Inspect(GameObject target, string descricao = null, string verso = null)
     {
         if (IsInspecting)
             return;
@@ -121,6 +131,10 @@ public class InspectionSystem : MonoBehaviour
         originalRotation = target.transform.rotation;
         originalParent = target.transform.parent;
 
+        descricaoActual = descricao;
+        versoActual = verso;
+        AMostrarVerso = false;
+
         // A UI primeiro, o modo depois. Ao contrário, uma falha a ligar o HUD
         // deixava o Inspecting na pilha com o objecto ainda no chão.
         ShowUI(true, descricao);
@@ -151,6 +165,7 @@ public class InspectionSystem : MonoBehaviour
         {
             HandleRotation();
             HandleZoom();
+            HandleFlip();
         }
 
         if (stateMachine != null &&
@@ -205,6 +220,43 @@ public class InspectionSystem : MonoBehaviour
             new Vector3(0f, 0f, currentDistance);
     }
 
+    private void HandleFlip()
+    {
+        if (Keyboard.current == null)
+            return;
+
+        if (Keyboard.current.qKey.wasPressedThisFrame)
+            Virar();
+    }
+
+    // Virar é uma meia-volta em torno do eixo vertical da câmara, e não do
+    // eixo do objecto: depois de o jogador o rodar com o rato, o «para cima»
+    // do objecto já não é o dele, e virá-lo pelo eixo próprio mandava a
+    // fotografia para uma posição que não é de trás nenhuma.
+    //
+    // Devolve false no que não tem verso: um objecto de uma face só não se
+    // vira, e virá-lo mostrava um painel vazio.
+    public bool Virar()
+    {
+        if (!IsInspecting || !TemVerso)
+            return false;
+
+        AMostrarVerso = !AMostrarVerso;
+
+        if (playerCamera != null)
+        {
+            inspectedObject.transform.Rotate(
+                playerCamera.transform.up,
+                180f,
+                Space.World
+            );
+        }
+
+        ShowUI(true, AMostrarVerso ? versoActual : descricaoActual);
+
+        return true;
+    }
+
     private void ExitInspection()
     {
         inspectedObject.transform.SetParent(originalParent);
@@ -213,6 +265,10 @@ public class InspectionSystem : MonoBehaviour
         inspectedObject.transform.rotation = originalRotation;
 
         inspectedObject = null;
+
+        descricaoActual = null;
+        versoActual = null;
+        AMostrarVerso = false;
 
         // O som antes do PopMode. Ao contrário, o movimento já estava
         // destrancado quando o clip arrancava, e o primeiro passo — que chega
