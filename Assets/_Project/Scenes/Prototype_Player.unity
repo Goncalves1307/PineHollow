@@ -728,6 +728,20 @@ MonoBehaviour:
   rotationSpeed: 0.15
   inspectionControls: {fileID: 717414412}
   descriptionText: {fileID: 717414418}
+  inspectionSource: {fileID: 315431428}
+  pickupClips:
+  - {fileID: 8300000, guid: 4a9748470d82cbbbe8e276382801ae65, type: 3}
+  - {fileID: 8300000, guid: 2aa04f104e8545b5e9e1df1e3ec6597e, type: 3}
+  - {fileID: 8300000, guid: 9abc59647e82fffb8aed9f6b0ee474af, type: 3}
+  - {fileID: 8300000, guid: 28a17621930b9945c982dec2fa35d1ce, type: 3}
+  putdownClips:
+  - {fileID: 8300000, guid: 4a7f486c53f850f5185e9ea185d4f6c1, type: 3}
+  - {fileID: 8300000, guid: 6a0a7bdf204e8be89bdd82bd90e4b4db, type: 3}
+  - {fileID: 8300000, guid: 69b79bdf7d80864b6bec0392fd6fceec, type: 3}
+  - {fileID: 8300000, guid: f514fb8ff20c56c0ba8fd83ab88be7a0, type: 3}
+  soundVolume: 0.6
+  minPitch: 0.92
+  maxPitch: 1.08
 --- !u!114 &315431423
 MonoBehaviour:
   m_ObjectHideFlags: 0

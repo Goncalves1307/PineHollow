@@ -22,6 +22,20 @@ public class InspectionSystem : MonoBehaviour
     // painel.
     [SerializeField] private TMP_Text descriptionText;
 
+    // Partilha o AudioSource do Player com os passos, de propósito. Um segundo
+    // AudioSource no mesmo GameObject punha o GetComponent de recurso do
+    // FootstepSystem a depender da ordem dos componentes — e os dois nunca
+    // tocam ao mesmo tempo, que o movimento está trancado enquanto se examina.
+    [Header("Som")]
+    [SerializeField] private AudioSource inspectionSource;
+    [SerializeField] private AudioClip[] pickupClips;
+    [SerializeField] private AudioClip[] putdownClips;
+    [SerializeField] private float soundVolume = 0.6f;
+
+    [Header("Pitch")]
+    [SerializeField] private float minPitch = 0.92f;
+    [SerializeField] private float maxPitch = 1.08f;
+
     private GameObject inspectedObject;
 
     // A distância a que o objecto está agora. O zoom mexe nesta, não no campo
@@ -33,6 +47,12 @@ public class InspectionSystem : MonoBehaviour
     private Transform originalParent;
 
     public bool IsInspecting => inspectedObject != null;
+
+    private void Awake()
+    {
+        if (inspectionSource == null)
+            inspectionSource = GetComponent<AudioSource>();
+    }
 
     private void Start()
     {
@@ -83,6 +103,8 @@ public class InspectionSystem : MonoBehaviour
         // A UI primeiro, o modo depois. Ao contrário, uma falha a ligar o HUD
         // deixava o Inspecting na pilha com o objecto ainda no chão.
         ShowUI(true, descricao);
+
+        Tocar(pickupClips);
 
         stateMachine.PushMode(PlayerState.Inspecting);
 
@@ -175,6 +197,24 @@ public class InspectionSystem : MonoBehaviour
             stateMachine.PopMode(PlayerState.Inspecting);
 
         ShowUI(false, null);
+
+        Tocar(putdownClips);
+    }
+
+    // Sobrevive a não haver clips: até os haver, não toca nada e não estoira.
+    private void Tocar(AudioClip[] clips)
+    {
+        if (inspectionSource == null || clips == null || clips.Length == 0)
+            return;
+
+        AudioClip clip = clips[Random.Range(0, clips.Length)];
+
+        if (clip == null)
+            return;
+
+        inspectionSource.pitch = Random.Range(minPitch, maxPitch);
+
+        inspectionSource.PlayOneShot(clip, soundVolume);
     }
 
     // Um objecto sem descrição não mostra uma caixa vazia: a linha desaparece
