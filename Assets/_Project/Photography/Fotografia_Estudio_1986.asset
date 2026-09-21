@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc15661f31f44c46ac37053e769878c5, type: 3}
+  m_Name: Fotografia_Estudio_1986
+  m_EditorClassIdentifier: Assembly-CSharp::PhotoAsset
+  fotografia:
+    id: Fotografia_Estudio_1986
+    ano: 1986
+    data: 17 de Julho de 1986
+    local: "Est\xFAdio do Ethan"
+    personagens:
+    - Thomas Hale
+    - Elias Ward
+    frente: "Tr\xEAs pessoas \xE0 porta da f\xE1brica. A terceira est\xE1 de costas."
+    verso: "Ele ainda n\xE3o chegou."
+    imagem: {fileID: 0}
+    metadados: []
+    alinhamentos:
+    - comId: Fotografia_Estudio_1994
+      posicaoAlvo: {x: 0, y: 0}
+      rotacaoAlvo: 0
+      escalaAlvo: 1
+      toleranciaPosicao: 0.06
+      toleranciaRotacao: 6
+      toleranciaEscala: 0.1
+    descobertas:
+    - id: porta-lateral
+      tipo: 2
+      descricao: "A porta lateral da f\xE1brica, que em 1994 est\xE1 tapada."
+      posicaoNaImagem: {x: 0, y: 0}
+      revelaAoAlinharCom: Fotografia_Estudio_1994
+      revelada: 0
+    autorada: 0
