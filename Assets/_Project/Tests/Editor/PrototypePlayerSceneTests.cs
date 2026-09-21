@@ -68,8 +68,7 @@ public class PrototypePlayerSceneTests
     {
         PlayerStateMachine[] maquinas =
             Object.FindObjectsByType<PlayerStateMachine>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None
+                FindObjectsInactive.Include
             );
 
         Assert.AreEqual(
@@ -233,8 +232,7 @@ public class PrototypePlayerSceneTests
         int layerInteractable = LayerMask.NameToLayer("Interactable");
 
         MonoBehaviour[] todos = Object.FindObjectsByType<MonoBehaviour>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
+            FindObjectsInactive.Include
         );
 
         int encontrados = 0;
@@ -413,8 +411,7 @@ public class PrototypePlayerSceneTests
     private static T ProcurarNaCena<T>() where T : Object
     {
         T[] achados = Object.FindObjectsByType<T>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
+            FindObjectsInactive.Include
         );
 
         return achados.Length > 0 ? achados[0] : null;
@@ -425,8 +422,7 @@ public class PrototypePlayerSceneTests
     private static IEnumerable<MonoBehaviour> ComportamentosDoProjecto()
     {
         MonoBehaviour[] todos = Object.FindObjectsByType<MonoBehaviour>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
+            FindObjectsInactive.Include
         );
 
         foreach (MonoBehaviour comportamento in todos)
@@ -486,8 +482,7 @@ public class PrototypePlayerSceneTests
     public void HaPeloMenosUmaSuperficieComSomProprio()
     {
         SurfaceAudio[] superficies = Object.FindObjectsByType<SurfaceAudio>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
+            FindObjectsInactive.Include
         );
 
         Assert.Greater(

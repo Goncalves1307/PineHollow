@@ -269,8 +269,7 @@ public static class Fase1Validacao
 
         Camera[] camaras = UnityEngine.Object
             .FindObjectsByType<Camera>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None
+                FindObjectsInactive.Include
             );
 
         Exigir(
@@ -327,8 +326,7 @@ public static class Fase1Validacao
         }
 
         var volumes = UnityEngine.Object.FindObjectsByType<Volume>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
+            FindObjectsInactive.Include
         );
 
         Exigir(
@@ -363,8 +361,7 @@ public static class Fase1Validacao
         EditorSceneManager.OpenScene(CenaBootstrap, OpenSceneMode.Single);
 
         var carregadores = UnityEngine.Object.FindObjectsByType<BootstrapLoader>(
-            FindObjectsInactive.Include,
-            FindObjectsSortMode.None
+            FindObjectsInactive.Include
         );
 
         Exigir(
