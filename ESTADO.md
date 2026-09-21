@@ -44,7 +44,7 @@ Código total: **11 scripts, ~840 linhas**, uma cena jogável.
 | Conceito, história, GDD, core gameplay, personagens, estrutura narrativa | ✅ | Documentos na raiz do repo |
 | **Mapa conceptual** | ❌ | 🔴 **o plano dava como feito e não está** — `GDD:150-169` é uma lista de 20 locais, não um mapa: sem adjacências, sem distâncias, sem planta, zero imagens no repo. Reaberto no plano. **Bloqueia a FASE 9** |
 | Referências visuais finais | ❌ | Protocolo e candidatos em `Pine_Hollow_Direccao_Artistica.md` §4. As imagens **não foram recolhidas** |
-| Direção artística final | ⚠️ | Restrições, três direcções e regra 1986/2026 escritas; **falta o Diogo escolher** |
+| Direção artística final | ❌ | Restrições, três direcções e regra 1986/2026 escritas; **falta escolher uma** — é isso que fecha o item |
 | Lista final de assets | ✅ | `Pine_Hollow_Producao.md` §2 — cobre os 22 locais, os 16 itens da FASE 18 e os 13 do slice |
 | Limites técnicos | ✅ | `Pine_Hollow_Producao.md` §1 — plataformas, 60 fps, máquina mínima, orçamentos |
 

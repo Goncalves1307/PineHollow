@@ -14,9 +14,8 @@
 
 ### 1.0 O que já está fixado no projecto — e o que disso foi decisão
 
-Quase nada foi decidido: o que está no projecto é o template do URP tal como veio, com a única
-excepção do colour space. Importa distinguir, porque **o template já está a fixar o orçamento por
-omissão**.
+Quase nada foi decidido: o que está no projecto é, tanto quanto se vê, o template do URP tal como
+veio. Importa distinguir, porque **o template já está a fixar o orçamento por omissão**.
 
 | Definição | Valor hoje | Onde | É decisão? |
 |---|---|---|---|
@@ -85,7 +84,7 @@ de `§1.9`.
 | SO | Windows 10 64-bit / Linux com Vulkan | idem |
 
 A mínima é deliberadamente uma placa de 2016-2017: é o que define os orçamentos abaixo, e é o que
-permite que o jogo exista fora de máquinas recentes. **Os orçamentos de `§1.4` a `§1.7` são para a
+permite que o jogo exista fora de máquinas recentes. **Os orçamentos de `§1.5` a `§1.7` são para a
 máquina mínima** — a recomendada é folga, não é outro orçamento.
 
 ### 1.4 Orçamento por frame
@@ -103,7 +102,7 @@ Medidos separadamente no Profiler, não somados: correm em paralelo.
 
 **Geometria visível por frame:**
 
-| | Triângulos | Batches (SRP Batcher ligado) |
+| | Triângulos | SetPass calls |
 |---|---|---|
 | Exterior (floresta, vila, estrada) | ≤ 2 000 000 | ≤ 400 SetPass |
 | Interior (casa, estúdio, fábrica) | ≤ 1 200 000 | ≤ 250 SetPass |
@@ -146,7 +145,8 @@ Compressão: BC7 para albedo de props narrativos, BC1 para o resto, **BC5 para n
 ⚠️ **Excepção obrigatória: tudo o que tem máscara de recorte não vai a BC1.** BC1 só tem 1 bit de
 alpha, e `§2.2` encomenda 8-12 espécies de rasteira, 4 arbustos e 4-6 de árvore — todos alpha-tested.
 Em BC1 a folha sai recortada aos blocos de 4×4, ou o importador cai sozinho para BC3/RGBA32 e rebenta
-o orçamento de `§1.7` sem ninguém dar conta. **Folhagem e recortes: BC7**, ou BC3 se for preciso poupar.
+o orçamento de `§1.7` sem ninguém dar conta. **Folhagem e recortes: BC7.** (BC3 é alternativa por compatibilidade ou tempo de compressão, não
+por memória: ambos ocupam 8 bpp.)
 
 Mipmaps sempre ligados — num mundo de 3 km² são eles que salvam a largura de banda.
 
@@ -160,25 +160,27 @@ Mipmaps sempre ligados — num mundo de 3 km² são eles que salvam a largura de
 (`GDD:359`), **compara** (`GDD:360`) e **alinha** (`GDD:376`, secção inteira) — e tudo isso vive de
 detalhes que a 256 não existem. Alvo:
 
-| Uso | Resolução | Rácio |
-|---|---|---|
+| Uso | Resolução |
+|---|---|
 | Fotografia-objecto (encontrada no mundo, é a do vertical slice) | **2048×1368** |
-| Verso da fotografia (textura própria, com a escrita) | 1024×688 |
-| Captura in-game, quando a máquina existir | 1024×688 |
+| Verso da fotografia (textura própria, com a escrita) | 1024×684 |
+| Captura in-game, quando a máquina existir | 1024×684 |
 
 O rácio é o de 35 mm, ~3:2 — é o que uma fotografia de 1986 teria. **As fotografias nunca são quadradas.**
 
 ⚠️ **As dimensões são múltiplos de 4 de propósito.** O 3:2 exacto daria 2048×1365 e 1024×683, e a
 compressão em bloco (BC1/BC5/BC7) exige blocos de 4×4: uma textura de 2048×1365 importa **sem
 compressão** — ~11 MB em RGBA32 em vez de ~2,8 MB em BC7. Com frente, verso e versão alterada por
-fotografia, isso come o orçamento de `§1.7` em poucas imagens.
+fotografia, isso come o orçamento de `§1.7` em poucas imagens. Os pares escolhidos dão 1,497:1,
+a 0,2 % do 3:2 — não se vê.
 
 ⚠️ Duas restrições que vêm do código e não da arte, ambas fora desta task:
 - a câmara de captura (`PhotoCaptureCamera`, `Prototype_Player.unity:206`) tem
   `m_RenderPostProcessing: 0` (`:235`), portanto capta a imagem **crua** — qualquer look próprio das
   fotografias é trabalho de código, na **FASE 5**, e depende de o `PhotoData` existir primeiro;
-- as `Texture2D` capturadas nunca são libertadas (vazam por disparo). A 2048 o vazamento passa de
-  incómodo a problema: 64× mais memória por foto.
+- as `Texture2D` capturadas nunca são libertadas (vazam por disparo). A 2048×1368 o vazamento passa
+  de incómodo a problema: **42,75× mais memória por foto** — de 192 KB para 8 MB, em `RGB24`
+  (`PhotographySystem.cs:196`), que é o formato que o código usa.
 
 ### 1.7 Memória
 
@@ -219,8 +221,9 @@ documento diz o que elas têm de cumprir. Ela decide, dentro destes alvos:
 - **MSAA vs pós-processo.** Hoje MSAA está desligado e não há AA nenhum. Com SSAO em DepthNormals
   (`PC_Renderer.asset:78`) já corre um prepass, e empilhar MSAA por cima disso numa placa de 2016 é
   caro; num mundo de folhagem alpha-tested o TAA resolve melhor o mesmo problema. Quem decidir mede.
-- **Forward+ ou Deferred.** Forward+ hoje. Mudar depois obriga a revisitar todos os materiais — decidir
-  **antes** de existir arte, não depois.
+- **Forward+, Forward ou Deferred.** Forward+ hoje. **Forward** é a opção que devolve o tecto de luzes
+  por objecto que o Forward+ desliga (`§1.4`); **Deferred** aguenta muitas luzes mas perde o MSAA.
+  Mudar depois obriga a revisitar todos os materiais — decidir **antes** de existir arte, não depois.
 - **Shadow distance e cascades** (hoje 50 m / 4). É a decisão que amarra os 3 km² — e 50 m é curto
   para um jogo de olhar longe: a linha onde as sombras acabam vê-se a andar. 80-100 m com 4 cascades
   ainda cabe no orçamento e vale a medição.
