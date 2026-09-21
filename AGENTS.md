@@ -105,10 +105,16 @@ grep -nE "error CS|warning CS" Logs/Editor.log | tail -20
 
 `Logs/Editor.log` is append-only across sessions and currently ~10MB — always `tail`, never `cat`.
 
-**There are no unit tests.** `com.unity.test-framework` 1.8.0 is installed, but there are zero
-test files and **zero `.asmdef` files in the whole project** — all game code compiles into the
-default `Assembly-CSharp`. Adding a first test means adding `Assets/Tests/` with its own asmdef
-referencing `UnityEngine.TestRunner`; there is no existing pattern to copy.
+**There is exactly one test file**, added in FASE 2:
+`Assets/_Project/Tests/Editor/PlayerStateMachineTests.cs` (EditMode, 20 tests over the mode stack).
+
+**There are still zero `.asmdef` files, and that is deliberate.** All game code compiles into the
+default `Assembly-CSharp`, and an asmdef **cannot reference a predefined assembly** — so a test
+asmdef would not see the game code at all. The way around it is the folder name: anything under an
+`Editor/` folder with no asmdef compiles into `Assembly-CSharp-Editor`, which Unity rebuilds as
+`Assembly-CSharp-Editor-testable` and which *does* see `Assembly-CSharp`. Put new EditMode tests
+next to that file and they are picked up with no asmdef. Giving the game code its own asmdef would
+work too, but it is a structural change — do not do it as a side effect of adding a test.
 
 What does exist is a settings validator, `Assets/_Project/Scripts/Editor/Fase1Validacao.cs`. It
 asserts the FASE 1 foundation — layers, collision matrix, folders, build settings, quality levels,
@@ -138,9 +144,15 @@ FASE 1.
 
 ## Architecture
 
-Twelve scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no
-namespaces (plus an editor-only validator under `Editor/`). All of them
-hang off the `Player` GameObject or off the object they act on. Three clusters:
+Sixteen scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no
+namespaces (plus an editor-only validator under `Editor/`, and `IInteractable`/`PlayerState`,
+which are not `MonoBehaviour`s). All of them hang off the `Player` GameObject or off the object
+they act on. Four clusters:
+
+**Player state** — [`PlayerStateMachine`](Assets/_Project/Scripts/PlayerStateMachine.cs) owns the
+mode stack, the cursor and the `Esc`; [`PlayerState`](Assets/_Project/Scripts/PlayerState.cs) is
+the enum. Every other cluster defers to it. See "The cursor and `Esc` have a single owner" below
+before touching any of them.
 
 **Interaction** — [`IInteractable`](Assets/_Project/Scripts/IInteractable.cs) is the whole contract:
 `Interact()` + `GetInteractionText()`. [`InteractionSystem`](Assets/_Project/Scripts/InteractionSystem.cs)
@@ -155,8 +167,11 @@ the camera transform, caches `position`/`rotation`/`parent`, locks the player, a
 a system explicitly defers to another. This is the system the GDD's photo inspection (rotate, flip,
 zoom, read the back) should grow out of.
 
-**Photography** — [`PhotographySystem`](Assets/_Project/Scripts/PhotographySystem.cs) is the state machine
-(`F` enters photo mode, LMB captures, `Esc` backs out one level). Capture copies the player
+**Photography** — [`PhotographySystem`](Assets/_Project/Scripts/PhotographySystem.cs) drives the
+photo flow (`F` enters photo mode, LMB captures, `Esc` backs out one level) but is **no longer the
+state machine** — since FASE 2 it pushes `Photographing`/`PhotoPreview` onto `PlayerStateMachine`
+and only enters when `OpenModeCount == 0`, so `F` can no longer open photo mode on top of an
+inspection. Capture copies the player
 camera's transform+FOV onto `photoCaptureCamera`, calls `Render()` into
 `Assets/_Project/Photography/PhotoRenderTexture.renderTexture`, and `ReadPixels` into a new `Texture2D`.
 [`PhotoAlbumSystem`](Assets/_Project/Scripts/PhotoAlbumSystem.cs) rebuilds a thumbnail grid from that list;
@@ -176,8 +191,10 @@ is no `PlayerInput` component in the scene and no generated C# wrapper — every
 directly. Do not assume a rebind there changes anything; either migrate the polling to actions, or
 treat the asset as dead weight.
 
-Current bindings, spread across four scripts: `WASD` + `LShift` move, mouse look, `E` interact,
-`F` photo mode, `Tab` album (see below), LMB shutter / thumbnail click, `Esc` back out.
+Current bindings: `WASD` + `LShift` sprint + `LeftCtrl` crouch (hold, like the sprint), mouse
+look, `E` interact, `F` photo mode, `Tab` album (see below), LMB shutter / thumbnail click, `Esc`
+back out. The `Esc` is read in `PlayerStateMachine` and nowhere else; everything else is polled by
+the system that owns it.
 
 ## Layers and tags
 
@@ -218,24 +235,33 @@ which only contains the *already-open* branch and returns without doing anything
 closed. So `Tab` is a no-op and the whole album/viewer path is dead in play mode. Anything you
 "fix" downstream of it is unverifiable until this is wired.
 
-**Nobody owns the cursor, and `PlayerController` wins.**
-[`PlayerController.HandleCursor()`](Assets/_Project/Scripts/PlayerController.cs#L109) runs **unconditionally**
-every frame — it is outside both the `IsMovementLocked` and `IsLookLocked` guards. It relocks and
-hides the cursor on *any* left-click while the cursor is free. `PhotoAlbumSystem.OpenAlbum()` and
-`PhotoViewerSystem.Open()` both free the cursor to let you click a thumbnail; the first such click
-re-locks it. Five scripts write `Cursor.lockState` at eight sites with no arbiter. The GDD adds a
-journal, an inventory, a photo comparison screen and an investigation board — all cursor screens.
-Give the lock a single owner before adding the sixth writer.
+**The cursor and `Esc` have a single owner: [`PlayerStateMachine`](Assets/_Project/Scripts/PlayerStateMachine.cs).**
+Fixed in FASE 2. It is the **only** class that writes `Cursor.lockState`/`Cursor.visible` and the
+**only** one that reads `escapeKey` — do not add a second of either. It runs at
+`[DefaultExecutionOrder(-100)]`, the one execution-order override in the project, so it registers
+the `Esc` before any consumer's `Update`.
 
-**`Esc` is overloaded four ways and Update order is undefined.** `PlayerController` (unlock cursor),
-`InspectionSystem` (exit inspection), `PhotographySystem` (close preview / exit photo mode) and
-`PhotoViewerSystem` (close) all read `escapeKey.wasPressedThisFrame` in the same frame. Unity gives
-no ordering guarantee between MonoBehaviours, so one keypress can collapse two UI layers at once.
-A new `Esc` handler makes this worse — route through the existing state machine instead.
+How to plug a new screen in — journal, inventory, photo comparison, investigation board:
 
-**`PhotoViewerSystem.Close()` leaves the cursor free** (`CursorLockMode.None`, visible — same as
-`Open()`, [PhotoViewerSystem.cs:47](Assets/_Project/Scripts/PhotoViewerSystem.cs#L47)). Closing the viewer
-does not hand control back to the player.
+1. Add a value to [`PlayerState`](Assets/_Project/Scripts/PlayerState.cs).
+2. `PushMode(yours)` when it opens, `PopMode(yours)` when it closes.
+3. In `Update`, close on `stateMachine.ConsumeBack(yours)`. It returns `true` **only** to the mode
+   on top of the stack, once per `Esc` — that is what stops one keypress collapsing two layers.
+4. If it is a mouse screen, add it to `FreesCursor`. Movement and look lock themselves: they are
+   derived from the state, never written from outside.
+
+`IsMovementLocked`/`IsLookLocked` used to be public setters on `PlayerController` that five
+systems wrote across (18 cross-writes). They are now read-only and derived. A free cursor locks
+both — that is what stopped the camera from spinning with the mouse loose.
+
+*Historical note, since the wrong numbers spread:* the pre-FASE-2 state was **4 scripts writing
+`Cursor.lockState` at 9 sites** and **7 `escapeKey` reads across 4 scripts**. This file and
+`ESTADO.md` both said "five scripts at eight sites" and "five lines", and the ClickUp task
+inherited it from here.
+
+**~~`PhotoViewerSystem.Close()` leaves the cursor free~~ — fixed in FASE 2.** `Close()` now pops
+`ViewingPhoto` off the mode stack and control goes back to the player. Listed here only so the
+old note is not mistaken for current behaviour.
 
 **Photos are 256×256 and live only in RAM.** The render texture is 256×256, and `capturedPhotos`
 ([PhotographySystem.cs:31](Assets/_Project/Scripts/PhotographySystem.cs#L31)) is a plain `List<Texture2D>`
@@ -243,10 +269,10 @@ that is never trimmed and whose textures are never `Destroy`ed — every shot le
 scene reload loses the lot. Nothing writes to disk, which also means Fase 21 (save system,
 "fotografias descobertas") has nothing to persist yet.
 
-**`InspectionSystem.inspectionDistance` is a `[SerializeField]` that is overwritten at runtime.**
-`Inspect()` resets it to a hard-coded `1.5f` ([InspectionSystem.cs:32](Assets/_Project/Scripts/InspectionSystem.cs#L32))
-before using it, so whatever you set in the inspector is ignored. It doubles as the live zoom
-state, which is why. Do not "fix" the inspector value — change the literal, or split the two roles.
+**~~`InspectionSystem.inspectionDistance` is overwritten at runtime~~ — fixed in FASE 2.** The two
+roles are split: `inspectionDistance` is the `[SerializeField]` starting distance and is now
+honoured, and a private `currentDistance` carries the live zoom state. The old note said "do not
+fix the inspector value"; that instruction is void.
 
 **The scene says `NewMonoBehaviourScript`, and that is fine.** `Assets/_Project/Scenes/Prototype_Player.unity:681`
 carries `m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript`, but the `m_Script` GUID
@@ -304,8 +330,9 @@ type. Name the underground room `Chamber` and the device `PhotoCamera`/`CameraDe
 - Dependencies are `[SerializeField]` private fields grouped under `[Header("…")]`, assigned in the
   inspector. `FindFirstObjectByType` appears once and is the exception, not the pattern.
 - Cross-system state is exposed as read-only properties (`IsInspecting`, `IsPhotographyMode`,
-  `IsOpen`) and consumers early-return on them in `Update`. Player locking is the one write-across
-  boundary (`IsMovementLocked` / `IsLookLocked`, public setters on `PlayerController`).
+  `IsOpen`) and consumers early-return on them in `Update`. **There is no write-across boundary
+  any more:** `IsMovementLocked`/`IsLookLocked` moved to `PlayerStateMachine` and are derived from
+  the mode stack, not set from outside. Push a mode instead.
 - Interaction prompt text is the verb only — `GetInteractionText()` returns "Abrir", "Fechar",
   "Examinar", "Interagir"; `InteractionSystem` prepends `[E] `. Keep the verb in the interactable.
 - No coroutines, no `async`, no events — everything is polled in `Update`. C# 9, netstandard2.1.

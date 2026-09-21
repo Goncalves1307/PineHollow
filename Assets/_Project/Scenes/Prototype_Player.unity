@@ -414,7 +414,7 @@ MonoBehaviour:
   photoList: {fileID: 213775768}
   photoThumbnailPrefab: {fileID: 2757692473703690821, guid: eb8a34b5a89076e8dbbf05a2d42893be, type: 3}
   photoViewerSystem: {fileID: 1930553375}
-  playerController: {fileID: 315431420}
+  stateMachine: {fileID: 315431424}
 --- !u!1 &213775767
 GameObject:
   m_ObjectHideFlags: 0
@@ -601,6 +601,8 @@ GameObject:
   - component: {fileID: 315431421}
   - component: {fileID: 315431422}
   - component: {fileID: 315431423}
+  - component: {fileID: 315431424}
+  - component: {fileID: 315431426}
   m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
@@ -667,6 +669,7 @@ MonoBehaviour:
   cameraTransform: {fileID: 1955434904}
   mouseSensitivity: 0.12
   maxLookAngle: 85
+  stateMachine: {fileID: 315431424}
 --- !u!114 &315431421
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -697,7 +700,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InspectionSystem
   playerCamera: {fileID: 1955434907}
-  playerController: {fileID: 315431420}
+  stateMachine: {fileID: 315431424}
   inspectionDistance: 1.5
   minDistance: 0.7
   maxDistance: 2.5
@@ -718,7 +721,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhotographySystem
   photoCamera: {fileID: 1363766759}
-  playerController: {fileID: 315431420}
+  stateMachine: {fileID: 315431424}
   playerCamera: {fileID: 1955434907}
   photoCaptureCamera: {fileID: 144508079}
   photoRenderTexture: {fileID: 8400000, guid: 9f18c329612435fdfacee17e372c0f26, type: 2}
@@ -726,6 +729,34 @@ MonoBehaviour:
   photoImage: {fileID: 51884766}
   photoAlbumSystem: {fileID: 165309926}
   photoAlbum: {fileID: 165309922}
+--- !u!114 &315431424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 315431417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1344266ca81549f3960cb71cc816772f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStateMachine
+--- !u!114 &315431426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 315431417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08313d3ba98645629070895af8555970, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FootstepSystem
+  characterController: {fileID: 315431418}
+  footstepSource: {fileID: 0}
+  stateMachine: {fileID: 315431424}
+  defaultFootstepClips: []
 --- !u!1 &512806841
 GameObject:
   m_ObjectHideFlags: 0
@@ -2008,6 +2039,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PhotoViewerSystem
   photoViewer: {fileID: 1930553371}
   photoImage: {fileID: 313368302}
+  stateMachine: {fileID: 315431424}
 --- !u!1 &1955434903
 GameObject:
   m_ObjectHideFlags: 0

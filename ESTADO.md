@@ -1,7 +1,7 @@
 # Pine Hollow — Estado do desenvolvimento
 
 > Auditoria das 27 fases do `Pine_Hollow_Plano_Completo_Desenvolvimento.md` contra o código real.
-> **Última verificação: 2026-09-21**, contra a árvore de trabalho
+> **Última verificação: 2026-09-21** (revista no fim da FASE 2), contra a árvore de trabalho
 > (`Assets/_Project/Scripts/`, `Assets/_Project/Scenes/Prototype_Player.unity`,
 > `ProjectSettings/`). A FASE 1 fechou nesse dia e os caminhos mudaram: tudo vive em
 > `Assets/_Project/` agora.
@@ -111,7 +111,7 @@ faria objectos desaparecerem sem que ninguém percebesse porquê.
 ⚠️ **Nada disto foi visto em play mode.** A verificação é de ficheiros e de API, pelo validador em
 batchmode. O pós-processamento mudou o que se vê e **ninguém abriu o ecrã**.
 
-### FASE 2 — Player · ~60%
+### FASE 2 — Player · ~90%
 
 **2.1 Estrutura** ✅ — Player, CharacterController, câmara, ground de teste.
 
@@ -130,12 +130,19 @@ vertical (`±85°`), cursor lock.
 | Texto contextual | ✅ |
 | Feedback visual | ❌ há texto, não há highlight |
 
-**2.4 Sensação** ❌ 0% — sem aceleração/desaceleração, sem head bob, sem footsteps, sem sons por
-superfície. A sensibilidade existe como campo mas não há ecrã de definições.
+**2.4 Sensação** ⚠️ parcial — aceleração/desaceleração e head bob feitos em
+`PlayerController.cs` (o bob compõe com a altura do agachar, não é absoluto). Footsteps e sons por
+superfície **existem como estrutura e correm em silêncio**: `FootstepSystem.cs` conta distância
+percorrida e `SurfaceAudio.cs` põe-se no objecto pisado, mas `Assets/_Project/Audio/` continua
+vazia e **não há um único clip no projecto**. A sensibilidade existe como campo; o ecrã de
+definições é FASE 12.
 
-**2.5 Estados** ❌ 0% — não há máquina de estados. Há `bool` espalhados por quatro scripts
-(`IsMovementLocked`, `IsLookLocked`, `IsInspecting`, `IsPhotographyMode`, `IsOpen`). Sem crouch,
-sem estado de flashback.
+**2.5 Estados** ✅ — `PlayerStateMachine.cs` é o dono único do estado, do cursor e do `Esc`.
+`PlayerState.cs` tem os sete estados do plano (`Normal`, `Sprinting`, `Crouching`, `Interacting`,
+`Inspecting`, `Photographing`, `Flashback`) mais as três camadas de UI que o `Esc` precisava de
+distinguir (`PhotoPreview`, `ViewingAlbum`, `ViewingPhoto`). Crouch em `LeftCtrl`, com verificação
+de tecto antes de levantar. **`Interacting` e `Flashback` estão declarados mas ainda sem
+transições** — a interacção de hoje é instantânea, e o `Flashback` espera o world state da FASE 7.
 
 ### FASE 3 — Sistema de interação · ~65%
 
@@ -155,8 +162,8 @@ sair ✅. Descrições ❌, sons ❌.
 
 Aplicação inicial: só o objecto genérico de teste. Documentos, fotografias e pistas ❌.
 
-🔴 `inspectionDistance` é `[SerializeField]` mas `Inspect()` reescreve-o com `1.5f` fixo
-(`InspectionSystem.cs:32`) — o valor do inspector é ignorado.
+✅ `inspectionDistance` já é respeitado (corrigido na FASE 2): o campo do inspector é a distância
+inicial e o zoom passou a viver num `currentDistance` privado.
 
 ### FASE 5 — Sistema de fotografia · ~15%, e o número engana
 
@@ -214,15 +221,18 @@ que tira. A máquina é mecânica real do jogo, mas de capítulos posteriores.
 
 Barata agora, cara depois — cada uma destas compõe com o conteúdo que vier a seguir.
 
-- [ ] Dar um dono único ao cursor. `PlayerController.HandleCursor()` corre incondicionalmente e
-      retranca o cursor ao primeiro clique — mata o álbum e o viewer. Cinco scripts escrevem
-      `Cursor.lockState` em oito sítios. O GDD ainda vai acrescentar journal, inventário,
-      comparação e investigation board, todos ecrãs de rato.
-- [ ] Arbitrar o `Esc`. Quatro scripts lêem `escapeKey.wasPressedThisFrame` no mesmo frame e a
-      ordem de `Update` entre MonoBehaviours não é garantida.
-- [ ] Ligar o álbum, ou tirar o `Tab` até haver o que mostrar.
+- [x] **Dar um dono único ao cursor** — FASE 2. `PlayerStateMachine` é a única classe que escreve
+      `Cursor.lockState`/`Cursor.visible`. Antes eram **4 scripts em 9 escritas** (o `ESTADO.md` e
+      o `AGENTS.md` diziam «cinco scripts em oito sítios»; a contagem estava errada e propagou-se
+      daqui para a descrição da task).
+- [x] **Arbitrar o `Esc`** — FASE 2. Um único leitor de `escapeKey`, e os sistemas pedem
+      `ConsumeBack(o-seu-modo)`: só o modo no topo da pilha recebe `true`. Eram **7 linhas em 4
+      scripts** (não 5). A máquina corre a `[DefaultExecutionOrder(-100)]` para registar o `Esc`
+      antes de qualquer consumidor.
+- [ ] Ligar o álbum, ou tirar o `Tab` até haver o que mostrar. **`OpenAlbum()` continua sem
+      chamador** e o `Tab` só fecha; abrir é FASE 5, atrás do `PhotoData`.
 - [ ] Layer mask no raycast de interação (+ decidir `QueryTriggerInteraction`).
-- [ ] Meter o `Prototype_Player.unity` nas build settings — hoje a build só tem a `SampleScene`
-      vazia do template.
+- [x] **Meter o `Prototype_Player.unity` nas build settings** — já estava feito desde `00df4f8`
+      (FASE 1) e este ficheiro continuava a pedi-lo.
 - [ ] `[SerializeField] InspectionSystem` no `InspectionInteractable`, em vez do
       `FindFirstObjectByType` por interacção (é o único aviso de compilação do projecto, CS0618).

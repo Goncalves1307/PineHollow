@@ -5,7 +5,7 @@ public class InspectionSystem : MonoBehaviour
 {
     [Header("Inspection")]
     [SerializeField] private Camera playerCamera;
-    [SerializeField] private PlayerController playerController;
+    [SerializeField] private PlayerStateMachine stateMachine;
     [SerializeField] private float inspectionDistance = 1.5f;
     [SerializeField] private float minDistance = 0.7f;
     [SerializeField] private float maxDistance = 2.5f;
@@ -18,6 +18,10 @@ public class InspectionSystem : MonoBehaviour
 
     private GameObject inspectedObject;
 
+    // A distância a que o objecto está agora. O zoom mexe nesta, não no campo
+    // configurado — antes o [SerializeField] era reescrito a cada inspecção.
+    private float currentDistance;
+
     private Vector3 originalPosition;
     private Quaternion originalRotation;
     private Transform originalParent;
@@ -29,7 +33,7 @@ public class InspectionSystem : MonoBehaviour
         if (IsInspecting)
             return;
 
-        inspectionDistance = 1.5f;
+        currentDistance = inspectionDistance;
 
         inspectedObject = target;
 
@@ -37,8 +41,8 @@ public class InspectionSystem : MonoBehaviour
         originalRotation = target.transform.rotation;
         originalParent = target.transform.parent;
 
-        playerController.IsMovementLocked = true;
-        playerController.IsLookLocked = true;
+        if (stateMachine != null)
+            stateMachine.PushMode(PlayerState.Inspecting);
 
         interactionPrompt.SetActive(false);
         inspectionControls.SetActive(true);
@@ -46,7 +50,7 @@ public class InspectionSystem : MonoBehaviour
         target.transform.SetParent(playerCamera.transform);
 
         target.transform.localPosition =
-            new Vector3(0f, 0f, inspectionDistance);
+            new Vector3(0f, 0f, currentDistance);
 
         target.transform.localRotation =
             Quaternion.identity;
@@ -60,8 +64,8 @@ public class InspectionSystem : MonoBehaviour
         HandleRotation();
         HandleZoom();
 
-        if (Keyboard.current != null &&
-            Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (stateMachine != null &&
+            stateMachine.ConsumeBack(PlayerState.Inspecting))
         {
             ExitInspection();
         }
@@ -100,16 +104,16 @@ public class InspectionSystem : MonoBehaviour
         if (Mathf.Abs(scroll) < 0.01f)
             return;
 
-        inspectionDistance -= scroll * zoomSpeed * 0.01f;
+        currentDistance -= scroll * zoomSpeed * 0.01f;
 
-        inspectionDistance = Mathf.Clamp(
-            inspectionDistance,
+        currentDistance = Mathf.Clamp(
+            currentDistance,
             minDistance,
             maxDistance
         );
 
         inspectedObject.transform.localPosition =
-            new Vector3(0f, 0f, inspectionDistance);
+            new Vector3(0f, 0f, currentDistance);
     }
 
     private void ExitInspection()
@@ -121,8 +125,8 @@ public class InspectionSystem : MonoBehaviour
 
         inspectedObject = null;
 
-        playerController.IsMovementLocked = false;
-        playerController.IsLookLocked = false;
+        if (stateMachine != null)
+            stateMachine.PopMode(PlayerState.Inspecting);
 
         interactionPrompt.SetActive(true);
         inspectionControls.SetActive(false);

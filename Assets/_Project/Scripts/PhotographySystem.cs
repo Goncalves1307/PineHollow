@@ -7,7 +7,7 @@ public class PhotographySystem : MonoBehaviour
 {
     [Header("Photography")]
     [SerializeField] private GameObject photoCamera;
-    [SerializeField] private PlayerController playerController;
+    [SerializeField] private PlayerStateMachine stateMachine;
     [SerializeField] private Camera playerCamera;
     [SerializeField] private Camera photoCaptureCamera;
     [SerializeField] private RenderTexture photoRenderTexture;
@@ -37,12 +37,6 @@ public class PhotographySystem : MonoBehaviour
 
         IsPhotographyMode = false;
         isPhotoPreviewOpen = false;
-
-        playerController.IsMovementLocked = false;
-        playerController.IsLookLocked = false;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
 
     private void Update()
@@ -59,18 +53,10 @@ public class PhotographySystem : MonoBehaviour
             TogglePhotoAlbum();
         }
 
-        // Se o álbum estiver aberto,
-        // não processamos o resto da fotografia.
+        // Com o álbum aberto não se processa o resto da fotografia. O Esc do
+        // álbum é do PhotoAlbumSystem, não daqui.
         if (photoAlbum.activeSelf)
-        {
-            if (Keyboard.current != null &&
-                Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                photoAlbumSystem.CloseAlbum();
-            }
-
             return;
-        }
 
         // =========================
         // MODO FOTOGRAFIA
@@ -78,8 +64,13 @@ public class PhotographySystem : MonoBehaviour
 
         if (!IsPhotographyMode)
         {
+            // Só se entra com o player livre: nada de abrir o modo fotografia
+            // por cima de uma inspecção, de um ecrã aberto, ou com o rato solto
+            // pelo Esc — daí ser o lock e não a contagem da pilha.
             if (Keyboard.current != null &&
-                Keyboard.current.fKey.wasPressedThisFrame)
+                Keyboard.current.fKey.wasPressedThisFrame &&
+                stateMachine != null &&
+                !stateMachine.IsMovementLocked)
             {
                 EnterPhotographyMode();
             }
@@ -87,17 +78,14 @@ public class PhotographySystem : MonoBehaviour
             return;
         }
 
-        playerController.IsMovementLocked = true;
-        playerController.IsLookLocked = false;
-
         // =========================
         // PREVIEW DA FOTOGRAFIA
         // =========================
 
         if (isPhotoPreviewOpen)
         {
-            if (Keyboard.current != null &&
-                Keyboard.current.escapeKey.wasPressedThisFrame)
+            if (stateMachine != null &&
+                stateMachine.ConsumeBack(PlayerState.PhotoPreview))
             {
                 ClosePhotoPreview();
             }
@@ -113,14 +101,17 @@ public class PhotographySystem : MonoBehaviour
             Mouse.current.leftButton.wasPressedThisFrame)
         {
             TakePhoto();
+
+            // Tirar a fotografia abre o preview. Sair fica para o Esc seguinte.
+            return;
         }
 
         // =========================
         // SAIR DO MODO FOTOGRAFIA
         // =========================
 
-        if (Keyboard.current != null &&
-            Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (stateMachine != null &&
+            stateMachine.ConsumeBack(PlayerState.Photographing))
         {
             ExitPhotographyMode();
         }
@@ -132,11 +123,8 @@ public class PhotographySystem : MonoBehaviour
 
         photoCamera.SetActive(true);
 
-        playerController.IsMovementLocked = true;
-        playerController.IsLookLocked = false;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        if (stateMachine != null)
+            stateMachine.PushMode(PlayerState.Photographing);
     }
 
     private void ExitPhotographyMode()
@@ -147,11 +135,12 @@ public class PhotographySystem : MonoBehaviour
         photoCamera.SetActive(false);
         photoPreview.SetActive(false);
 
-        playerController.IsMovementLocked = false;
-        playerController.IsLookLocked = false;
-
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        if (stateMachine != null)
+        {
+            // O preview pode estar aberto por cima: sai-se das duas camadas.
+            stateMachine.PopMode(PlayerState.PhotoPreview);
+            stateMachine.PopMode(PlayerState.Photographing);
+        }
     }
 
     private void TakePhoto()
@@ -176,6 +165,9 @@ public class PhotographySystem : MonoBehaviour
         photoPreview.SetActive(true);
 
         isPhotoPreviewOpen = true;
+
+        if (stateMachine != null)
+            stateMachine.PushMode(PlayerState.PhotoPreview);
 
         Debug.Log(
             "Fotografia tirada! Total: " +
@@ -221,20 +213,23 @@ public class PhotographySystem : MonoBehaviour
     {
         photoPreview.SetActive(false);
         isPhotoPreviewOpen = false;
+
+        if (stateMachine != null)
+            stateMachine.PopMode(PlayerState.PhotoPreview);
     }
 
     private void TogglePhotoAlbum()
     {
         if (photoAlbum.activeSelf)
-{
-    if (Keyboard.current != null &&
-        Keyboard.current.escapeKey.wasPressedThisFrame)
-    {
-        photoAlbumSystem.CloseAlbum();
-        photoAlbum.SetActive(false);
-    }
+        {
+            photoAlbumSystem.CloseAlbum();
+            photoAlbum.SetActive(false);
 
-    return;
-}
+            return;
+        }
+
+        // Abrir o álbum é FASE 5 e está atrás do PhotoData: por isso o Tab
+        // ainda não abre nada. O que saiu daqui foi o segundo leitor do Esc —
+        // com o álbum aberto, quem o fecha é o PhotoAlbumSystem.
     }
 }

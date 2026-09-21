@@ -10,34 +10,50 @@ public class PhotoAlbumSystem : MonoBehaviour
     [Header("Photo Viewer")]
     [SerializeField] private PhotoViewerSystem photoViewerSystem;
 
-    [Header("Player")]
-    [SerializeField] private PlayerController playerController;
+    [Header("State")]
+    [SerializeField] private PlayerStateMachine stateMachine;
 
     public bool IsOpen { get; private set; }
+
+    private void Update()
+    {
+        if (!IsOpen)
+            return;
+
+        if (stateMachine != null &&
+            stateMachine.ConsumeBack(PlayerState.ViewingAlbum))
+        {
+            CloseAlbum();
+        }
+    }
 
     public void OpenAlbum()
     {
         IsOpen = true;
 
-        playerController.IsMovementLocked = true;
-        playerController.IsLookLocked = true;
-
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
+        if (stateMachine != null)
+            stateMachine.PushMode(PlayerState.ViewingAlbum);
 
         RefreshAlbum();
     }
 
-public void CloseAlbum()
-{
-    IsOpen = false;
+    public void CloseAlbum()
+    {
+        IsOpen = false;
 
-    playerController.IsMovementLocked = false;
-    playerController.IsLookLocked = false;
+        if (stateMachine != null)
+            stateMachine.PopMode(PlayerState.ViewingAlbum);
 
-    Cursor.lockState = CursorLockMode.Locked;
-    Cursor.visible = false;
-}
+        // O painel desliga-se aqui, como o código antigo fazia. Sem isto ficava
+        // desenhado por cima do jogo e o PhotographySystem batia para sempre no
+        // seu `if (photoAlbum.activeSelf) return`, matando o F e o disparo.
+        //
+        // Este componente vive no próprio painel, por isso isto é a última
+        // coisa do método: o estado já está todo consistente quando o Update
+        // deixar de correr. Quem abre tem de activar o painel primeiro — e
+        // abrir é FASE 5.
+        gameObject.SetActive(false);
+    }
 
     public void RefreshAlbum()
     {
