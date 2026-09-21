@@ -83,12 +83,16 @@ A prioridade será sempre ter uma versão jogável antes de aumentar a escala.
 - [x] GDD
 - [x] Core gameplay
 - [x] Personagens
-- [x] Mapa conceptual
+- [ ] Mapa conceptual — **reaberto a 21/09/2026**: o que existe é uma lista de locais
+      (`Pine_Hollow_GDD_v0.1.md:150-169`), não um mapa. Sem adjacências, sem distâncias, sem planta.
+      Bloqueia a FASE 9.
 - [x] Estrutura narrativa
-- [ ] Referências visuais finais
-- [ ] Direção artística final
-- [ ] Lista final de assets
-- [ ] Limites técnicos
+- [ ] Referências visuais finais — quadro de decisão em `Pine_Hollow_Direccao_Artistica.md`,
+      à espera de escolha; as imagens ainda não foram recolhidas
+- [~] Direção artística final — `Pine_Hollow_Direccao_Artistica.md`: restrições e regra 1986/2026
+      escritas, **direcção por escolher** entre as três propostas
+- [x] Lista final de assets — `Pine_Hollow_Producao.md` §2
+- [x] Limites técnicos — `Pine_Hollow_Producao.md` §1
 
 # FASE 1 — Fundação técnica do Unity
 
@@ -598,6 +602,8 @@ Música:
 - [ ] Final
 
 # FASE 18 — Arte e ambiente
+
+> Lista fechada, com quantidades e origem: `Pine_Hollow_Producao.md` §2.
 
 Mundo:
 - [ ] Vegetação

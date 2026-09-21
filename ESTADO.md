@@ -33,18 +33,29 @@ Código total: **11 scripts, ~840 linhas**, uma cena jogável.
 
 ## Fase a fase
 
-### FASE 0 — Pré-produção · ~70%
+### FASE 0 — Pré-produção · ~85%
+
+> Revisto a 2026-09-21 (task `869f4yfdz`). Duas entregas novas na raiz:
+> `Pine_Hollow_Producao.md` (limites técnicos + lista de assets) e
+> `Pine_Hollow_Direccao_Artistica.md` (quadro de decisão, direcção **por escolher**).
 
 | Item | Estado | Nota |
 |---|---|---|
-| Conceito, história, GDD, core gameplay, personagens, mapa conceptual, estrutura narrativa | ✅ | Quatro documentos na raiz do repo |
-| Referências visuais finais | ❌ | |
-| Direção artística final | ❌ | |
-| Lista final de assets | ❌ | |
-| Limites técnicos | ❌ | |
+| Conceito, história, GDD, core gameplay, personagens, estrutura narrativa | ✅ | Documentos na raiz do repo |
+| **Mapa conceptual** | ❌ | 🔴 **o plano dava como feito e não está** — `GDD:150-169` é uma lista de 20 locais, não um mapa: sem adjacências, sem distâncias, sem planta, zero imagens no repo. Reaberto no plano. **Bloqueia a FASE 9** |
+| Referências visuais finais | ❌ | Protocolo e candidatos em `Pine_Hollow_Direccao_Artistica.md` §4. As imagens **não foram recolhidas** |
+| Direção artística final | ⚠️ | Restrições, três direcções e regra 1986/2026 escritas; **falta o Diogo escolher** |
+| Lista final de assets | ✅ | `Pine_Hollow_Producao.md` §2 — cobre os 22 locais, os 16 itens da FASE 18 e os 13 do slice |
+| Limites técnicos | ✅ | `Pine_Hollow_Producao.md` §1 — plataformas, 60 fps, máquina mínima, orçamentos |
 
-Não existe um único asset de arte no projecto. Os quatro itens em aberto são os que o plano já
-marca como abertos — aqui o plano está certo.
+Continua a não existir um único asset de arte no projecto.
+
+🔴 **Duas listas de locais que não coincidem:** `Plano:343-364` tem 22 e `GDD:150-169` tem 20 — o GDD
+tem torre meteorológica e zona montanhosa que o plano não tem; o plano tem trilhos e miradouro que o
+GDD não tem. Alinhar antes do blockout.
+
+⚠️ **Os limites técnicos foram derivados, não medidos.** Nada foi corrido em play mode. A primeira
+medição real com arte na cena manda sobre os números de `Producao.md` §1.4.
 
 ### FASE 1 — Fundação técnica · ~40%
 

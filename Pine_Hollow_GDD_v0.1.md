@@ -4,7 +4,7 @@
 **Género:** Thriller de investigação / mistério  
 **Perspetiva:** Primeira pessoa  
 **Engine:** Unity  
-**Estilo visual:** Realista  
+**Estilo visual:** Realista — direcção completa em `Pine_Hollow_Direccao_Artistica.md`  
 **Duração alvo:** 2–4 horas  
 **Mapa:** Open world compacto, aproximadamente 3 km²  
 **Combate:** Não  
@@ -130,9 +130,12 @@ O projeto é pensado como um jogo relativamente curto e focado.
 - Sem árvores de habilidades.
 - Sem progressão baseada em XP.
 - Narrativa ambiental.
-- Reutilização inteligente de locais entre 1986 e 2026.
+- Reutilização inteligente de locais entre 1986 e 2026. — *a regra que a torna possível está em `Pine_Hollow_Direccao_Artistica.md` §5: a geometria nunca muda; muda a luz, o grading e um punhado de props.*
 
 A escala deve ser compatível com um desenvolvimento pequeno/solo.
+
+Plataformas, alvo de desempenho, máquina mínima e orçamentos de geometria e textura:
+`Pine_Hollow_Producao.md` §1.
 
 ---
 
