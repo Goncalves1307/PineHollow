@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -7,10 +8,33 @@ using UnityEngine;
 // privados que ninguém alcança.
 public class InteractablesTests
 {
+    // Limpeza no TearDown e não no fim do teste: um assert que falha lança, e o
+    // que viesse depois dele nunca corria.
+    private readonly List<GameObject> criados = new List<GameObject>();
+
+    private GameObject Novo(string nome)
+    {
+        GameObject go = new GameObject(nome);
+        criados.Add(go);
+        return go;
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        foreach (GameObject go in criados)
+        {
+            if (go != null)
+                Object.DestroyImmediate(go);
+        }
+
+        criados.Clear();
+    }
+
     [Test]
     public void Gaveta_ComutaOEstadoEOVerbo()
     {
-        GameObject go = new GameObject("Gaveta");
+        GameObject go = Novo("Gaveta");
         DrawerInteractable gaveta = go.AddComponent<DrawerInteractable>();
 
         Assert.IsFalse(gaveta.IsOpen);
@@ -21,13 +45,12 @@ public class InteractablesTests
         Assert.IsTrue(gaveta.IsOpen, "o estado não é legível de fora");
         Assert.AreEqual("Fechar", gaveta.GetInteractionText());
 
-        Object.DestroyImmediate(go);
     }
 
     [Test]
     public void Gaveta_NaoComutaEnquantoSeMove()
     {
-        GameObject go = new GameObject("Gaveta");
+        GameObject go = Novo("Gaveta");
         DrawerInteractable gaveta = go.AddComponent<DrawerInteractable>();
 
         gaveta.Interact();
@@ -37,15 +60,14 @@ public class InteractablesTests
             gaveta.IsOpen,
             "a segunda interacção apanhou a gaveta a meio caminho");
 
-        Object.DestroyImmediate(go);
     }
 
     [Test]
     public void Interruptor_AcendeEApagaAsLuzes()
     {
-        GameObject go = new GameObject("Interruptor");
+        GameObject go = Novo("Interruptor");
 
-        GameObject lampada = new GameObject("Lampada");
+        GameObject lampada = Novo("Lampada");
         Light luz = lampada.AddComponent<Light>();
 
         SwitchInteractable interruptor = go.AddComponent<SwitchInteractable>();
@@ -74,14 +96,12 @@ public class InteractablesTests
         Assert.IsTrue(luz.enabled);
         Assert.AreEqual("Apagar", interruptor.GetInteractionText());
 
-        Object.DestroyImmediate(lampada);
-        Object.DestroyImmediate(go);
     }
 
     [Test]
     public void Documento_AbreOEcraEEmpurraOModo()
     {
-        GameObject host = new GameObject("Host");
+        GameObject host = Novo("Host");
         PlayerStateMachine maquina = host.AddComponent<PlayerStateMachine>();
         ReadingSystem leitura = host.AddComponent<ReadingSystem>();
 
@@ -92,7 +112,7 @@ public class InteractablesTests
                 System.Reflection.BindingFlags.Instance)
             .SetValue(leitura, maquina);
 
-        GameObject go = new GameObject("Documento");
+        GameObject go = Novo("Documento");
         DocumentInteractable documento = go.AddComponent<DocumentInteractable>();
         typeof(DocumentInteractable)
             .GetField(
@@ -117,8 +137,6 @@ public class InteractablesTests
         Assert.IsFalse(leitura.IsReading);
         Assert.AreEqual(0, maquina.OpenModeCount, "a camada ficou presa na pilha");
 
-        Object.DestroyImmediate(go);
-        Object.DestroyImmediate(host);
     }
 
     [Test]
@@ -126,7 +144,7 @@ public class InteractablesTests
     {
         // Lê-se com os olhos, não com o rato: se libertasse o cursor, a câmara
         // deixava de responder e o ecrã pedia um clique que não existe.
-        GameObject host = new GameObject("Host");
+        GameObject host = Novo("Host");
         PlayerStateMachine maquina = host.AddComponent<PlayerStateMachine>();
 
         maquina.PushMode(PlayerState.Reading);
@@ -135,6 +153,5 @@ public class InteractablesTests
         Assert.IsTrue(maquina.IsMovementLocked);
         Assert.IsTrue(maquina.IsLookLocked);
 
-        Object.DestroyImmediate(host);
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
@@ -15,6 +16,11 @@ public class InteractionSystemTests
     private InteractionSystem interaction;
     private PlayerStateMachine stateMachine;
     private GameObject prompt;
+
+    // A limpeza vive toda aqui e não no fim de cada teste: um assert que falha
+    // lança, e o DestroyImmediate que viesse a seguir nunca corria — os
+    // colliders sobreviviam e faziam falhar os testes seguintes por arrasto.
+    private readonly List<GameObject> criados = new List<GameObject>();
 
     // Alvo de teste: conta as interacções e diz o verbo, como qualquer
     // interactable real.
@@ -49,6 +55,14 @@ public class InteractionSystemTests
     [TearDown]
     public void TearDown()
     {
+        foreach (GameObject go in criados)
+        {
+            if (go != null)
+                Object.DestroyImmediate(go);
+        }
+
+        criados.Clear();
+
         Object.DestroyImmediate(prompt);
         Object.DestroyImmediate(cameraHost);
         Object.DestroyImmediate(host);
@@ -70,9 +84,10 @@ public class InteractionSystemTests
             .Invoke(interaction, null);
     }
 
-    private static GameObject Box(Vector3 at, int layer, bool isTrigger)
+    private GameObject Box(Vector3 at, int layer, bool isTrigger)
     {
         GameObject go = new GameObject("Box");
+        criados.Add(go);
         go.layer = layer;
         go.transform.position = at;
 
@@ -93,7 +108,6 @@ public class InteractionSystemTests
         Assert.IsTrue(interaction.HasFocus);
         Assert.IsTrue(prompt.activeSelf);
 
-        Object.DestroyImmediate(alvo);
     }
 
     [Test]
@@ -110,8 +124,6 @@ public class InteractionSystemTests
 
         Assert.IsTrue(interaction.HasFocus, "o trigger roubou o foco");
 
-        Object.DestroyImmediate(alvo);
-        Object.DestroyImmediate(trigger);
     }
 
     [Test]
@@ -128,8 +140,6 @@ public class InteractionSystemTests
 
         Assert.IsTrue(interaction.HasFocus, "a grade matou a interacção");
 
-        Object.DestroyImmediate(alvo);
-        Object.DestroyImmediate(grade);
     }
 
     [Test]
@@ -138,6 +148,7 @@ public class InteractionSystemTests
         // A gaveta e o interruptor são objectos compostos: o script está no
         // móvel, o collider que se toca está na frente da gaveta.
         GameObject pai = new GameObject("Movel");
+        criados.Add(pai);
         pai.transform.position = new Vector3(0f, 0f, 2f);
         FakeInteractable script = pai.AddComponent<FakeInteractable>();
 
@@ -150,8 +161,10 @@ public class InteractionSystemTests
             interaction.HasFocus,
             "GetComponent não via o script no pai");
 
-        Object.DestroyImmediate(pai);
-        Assert.AreEqual(0, script.Interactions);
+        Assert.AreEqual(
+            0,
+            script.Interactions,
+            "ter foco não é interagir: o Interact() não foi premido");
     }
 
     [Test]
@@ -165,7 +178,6 @@ public class InteractionSystemTests
         Assert.IsFalse(interaction.HasFocus);
         Assert.IsFalse(prompt.activeSelf);
 
-        Object.DestroyImmediate(alvo);
     }
 
     [Test]
@@ -185,7 +197,6 @@ public class InteractionSystemTests
         Assert.IsFalse(interaction.HasFocus, "interagiu por trás da UI");
         Assert.IsFalse(prompt.activeSelf, "o prompt ficou visível por trás da UI");
 
-        Object.DestroyImmediate(alvo);
     }
 
     [Test]
@@ -204,6 +215,5 @@ public class InteractionSystemTests
         Assert.IsTrue(interaction.HasFocus);
         Assert.IsTrue(prompt.activeSelf);
 
-        Object.DestroyImmediate(alvo);
     }
 }
