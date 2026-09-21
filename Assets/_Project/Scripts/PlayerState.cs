@@ -14,6 +14,11 @@ public enum PlayerState
     Interacting,
 
     Inspecting,
+
+    // Ler um documento é uma camada: abre, prende o player e fecha-se no Esc.
+    // Não liberta o cursor — lê-se com os olhos, não com o rato.
+    Reading,
+
     Photographing,
     PhotoPreview,
     ViewingAlbum,
