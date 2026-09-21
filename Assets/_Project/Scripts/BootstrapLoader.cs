@@ -15,10 +15,16 @@ public class BootstrapLoader : MonoBehaviour
 
     private void Awake()
     {
-        // Se voltarmos ao Bootstrap por engano, não queremos dois.
         if (instance != null && instance != this)
         {
+            // Voltar a carregar o Bootstrap e um pedido para recomecar. Quem
+            // sobrevive e que tem de carregar a cena de jogo: o Start() do que
+            // sobrevive ja correu e nao volta a correr, e sem isto ficavamos
+            // presos no Bootstrap para sempre.
+            instance.LoadGameScene();
+
             Destroy(gameObject);
+
             return;
         }
 
@@ -28,6 +34,19 @@ public class BootstrapLoader : MonoBehaviour
     }
 
     private void Start()
+    {
+        // Um duplicado ja pediu o carregamento ao que sobrevive, e o Destroy()
+        // do Awake() so acontece no fim do frame — sem isto o Start() dele
+        // pedia-o outra vez.
+        if (instance != this)
+        {
+            return;
+        }
+
+        LoadGameScene();
+    }
+
+    private void LoadGameScene()
     {
         if (string.IsNullOrEmpty(gameSceneName))
         {

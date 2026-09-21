@@ -44,8 +44,8 @@ O jogo não terá combate. A tensão será criada através de exploração, desc
 - [x] Projeto Unity 6
 - [x] Universal 3D / URP
 - [x] Input System
-- [x] Estrutura de pastas
-- [x] Cenas Bootstrap e Prototype_Player
+- [x] Estrutura de pastas <!-- marcado antes de existir; só passou a ser verdade a 2026-09-21, na FASE 1 -->
+- [x] Cenas Bootstrap e Prototype_Player <!-- idem: a Bootstrap.unity não existia quando isto foi marcado -->
 - [x] Player
 - [x] Character Controller
 - [x] Camera em primeira pessoa

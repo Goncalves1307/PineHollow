@@ -45,6 +45,7 @@ public static class Fase1Validacao
         ValidarBuildSettings();
         ValidarQualidade();
         ValidarCena();
+        ValidarArranque();
 
         if (falhas.Count == 0)
         {
@@ -245,6 +246,18 @@ public static class Fase1Validacao
             return;
         }
 
+        // Abrir em Single fecha o que estiver aberto. No editor isso levaria o
+        // trabalho por gravar de quem carregou no menu, por isso perguntamos
+        // primeiro e repomos a cena original no fim.
+        string cenaOriginal = EditorSceneManager.GetActiveScene().path;
+
+        if (!Application.isBatchMode &&
+            !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+        {
+            falhas.Add("validação cancelada: havia alterações por gravar");
+            return;
+        }
+
         var cena = EditorSceneManager.OpenScene(CenaJogo, OpenSceneMode.Single);
 
         Exigir(cena.IsValid(), "não consegui abrir " + CenaJogo);
@@ -319,9 +332,86 @@ public static class Fase1Validacao
         );
 
         Exigir(
-            volumes.Any(v => v.isGlobal && v.profile != null),
+            // sharedProfile, não profile: o getter de .profile instancia um
+            // clone do perfil e marca a cena como suja só por a validarmos.
+            volumes.Any(v => v.isGlobal && v.sharedProfile != null),
             "a cena não tem um Volume global com perfil — " +
             "nada do que a direcção artística decidiu se vê"
         );
+
+        ReporCena(cenaOriginal);
+    }
+
+    /// <summary>
+    /// Devolve o editor à cena que lá estava antes de validarmos.
+    /// </summary>
+    /// <summary>
+    /// A Bootstrap e o unico caminho de arranque da build. Se a referencia de
+    /// script se perder — um .meta recriado num merge chega — o jogador fica
+    /// num ecra preto para sempre e nada mais aqui daria por isso.
+    /// </summary>
+    private static void ValidarArranque()
+    {
+        if (!System.IO.File.Exists(CenaBootstrap))
+        {
+            falhas.Add("não existe " + CenaBootstrap);
+            return;
+        }
+
+        string cenaOriginal = EditorSceneManager.GetActiveScene().path;
+
+        EditorSceneManager.OpenScene(CenaBootstrap, OpenSceneMode.Single);
+
+        var carregadores = UnityEngine.Object.FindObjectsByType<BootstrapLoader>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+
+        Exigir(
+            carregadores.Length == 1,
+            "a Bootstrap devia ter exactamente um BootstrapLoader e tem " +
+            carregadores.Length +
+            " — se for 0, a referência de script perdeu-se e a build arranca " +
+            "num ecrã preto"
+        );
+
+        if (carregadores.Length == 1)
+        {
+            var serializado = new SerializedObject(carregadores[0]);
+
+            string cena = serializado
+                .FindProperty("gameSceneName")
+                .stringValue;
+
+            Exigir(
+                !string.IsNullOrEmpty(cena),
+                "o BootstrapLoader não tem cena de jogo configurada"
+            );
+
+            Exigir(
+                EditorBuildSettings.scenes.Any(
+                    c => c.enabled &&
+                         System.IO.Path.GetFileNameWithoutExtension(c.path) == cena
+                ),
+                "o BootstrapLoader carrega '" + cena + "', que não é nenhuma " +
+                "cena activa das build settings — LoadScene rebenta em runtime"
+            );
+        }
+
+        ReporCena(cenaOriginal);
+    }
+
+    private static void ReporCena(string caminhoOriginal)
+    {
+        if (Application.isBatchMode ||
+            string.IsNullOrEmpty(caminhoOriginal) ||
+            caminhoOriginal == CenaJogo ||
+            caminhoOriginal == CenaBootstrap ||
+            !System.IO.File.Exists(caminhoOriginal))
+        {
+            return;
+        }
+
+        EditorSceneManager.OpenScene(caminhoOriginal, OpenSceneMode.Single);
     }
 }

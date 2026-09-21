@@ -100,6 +100,14 @@ efeitos que a direcção artística proíbe — aberração cromática, distorç
 blur — **foram removidos**, porque ligar o pós-processamento tornava-os vivos. Os componentes de
 teste ficaram: limpá-los é arrumação, não risco.
 
+⚠️ **Duas coisas da FASE 1 ficaram deliberadamente por mexer, e ficam aqui para não voltarem a
+desaparecer.** O **render scale** (`PC_RPAsset.asset:29`, `m_RenderScale: 1`) fica a `1`: o alvo é
+1080p nativo e baixá-lo é matéria de medição, não de arrumação. E as **layer masks do renderer**
+(`PC_Renderer.asset:42-47`, `m_OpaqueLayerMask`/`m_TransparentLayerMask` a `4294967295`) ficam a
+tudo de propósito — o filtro de `PhotoOnly`/`IgnorePhoto` é feito no *culling mask* das câmaras, que
+é onde deve ser feito; apertar também as do renderer duplicava a mesma regra em dois sítios e
+faria objectos desaparecerem sem que ninguém percebesse porquê.
+
 ⚠️ **Nada disto foi visto em play mode.** A verificação é de ficheiros e de API, pelo validador em
 batchmode. O pós-processamento mudou o que se vê e **ninguém abriu o ecrã**.
 
