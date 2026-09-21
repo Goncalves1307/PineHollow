@@ -4,16 +4,15 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Testes do realce. O que interessa é que o feedback do foco vive na mira e
-// mais nada muda: nenhum material, nenhuma luz, nenhum shader — é isso que o
-// mantém fora do alinhamento de fotografias.
+// Testes da mira. Ela já não reage ao foco — isso é do HighlightSystem, no
+// objecto. O que lhe resta, e é o que se testa, é estar lá e sair do ecrã
+// quando o player não manda.
 public class CrosshairSystemTests
 {
     private readonly List<GameObject> criados = new List<GameObject>();
 
     private CrosshairSystem sistema;
     private PlayerStateMachine maquina;
-    private InteractionSystem interaccao;
     private RectTransform mira;
     private Image traco;
 
@@ -22,7 +21,6 @@ public class CrosshairSystemTests
     {
         GameObject host = Novo("Host");
         maquina = host.AddComponent<PlayerStateMachine>();
-        interaccao = host.AddComponent<InteractionSystem>();
         sistema = host.AddComponent<CrosshairSystem>();
 
         GameObject miraGo = Novo("Crosshair");
@@ -34,7 +32,6 @@ public class CrosshairSystemTests
 
         Campo("crosshair").SetValue(sistema, mira);
         Campo("strokes").SetValue(sistema, new Graphic[] { traco });
-        Campo("interactionSystem").SetValue(sistema, interaccao);
         Campo("stateMachine").SetValue(sistema, maquina);
 
         Invocar("Start");
@@ -72,62 +69,10 @@ public class CrosshairSystemTests
             .Invoke(sistema, null);
     }
 
-    // Muitos frames, para o MoveTowards chegar ao alvo.
     private void Ticks(int quantos)
     {
         for (int i = 0; i < quantos; i++)
             Invocar("Update");
-    }
-
-    private void PorFoco(bool tem)
-    {
-        typeof(InteractionSystem)
-            .GetField("currentInteractable",
-                BindingFlags.NonPublic | BindingFlags.Instance)
-            .SetValue(interaccao, tem ? new FakeInteractable() : null);
-    }
-
-    private class FakeInteractable : IInteractable
-    {
-        public void Interact() { }
-        public string GetInteractionText() { return "Abrir"; }
-    }
-
-    [Test]
-    public void EmRepouso_AMiraEstaDiscretaEVisivel()
-    {
-        Ticks(60);
-
-        Assert.IsTrue(mira.gameObject.activeSelf);
-        Assert.AreEqual(0.35f, traco.color.a, 0.01f, "repouso não é discreto");
-        Assert.AreEqual(1f, mira.localScale.x, 0.01f);
-    }
-
-    [Test]
-    public void ComFoco_AMiraAbreEGanhaPresenca()
-    {
-        PorFoco(true);
-        Ticks(60);
-
-        Assert.Greater(
-            traco.color.a, 0.8f,
-            "a mira não reagiu ao foco — o realce não acontece");
-        Assert.Greater(
-            mira.localScale.x, 1.3f,
-            "a mira não abriu");
-    }
-
-    [Test]
-    public void PerdidoOFoco_AMiraVoltaAoRepouso()
-    {
-        PorFoco(true);
-        Ticks(60);
-
-        PorFoco(false);
-        Ticks(60);
-
-        Assert.AreEqual(0.35f, traco.color.a, 0.01f, "ficou presa em destaque");
-        Assert.AreEqual(1f, mira.localScale.x, 0.01f);
     }
 
     [Test]
@@ -162,5 +107,16 @@ public class CrosshairSystemTests
         Ticks(2);
 
         Assert.IsTrue(mira.gameObject.activeSelf);
+    }
+
+    [Test]
+    public void EmRepouso_AMiraEstaLaEDiscreta()
+    {
+        Ticks(5);
+
+        Assert.IsTrue(mira.gameObject.activeSelf, "a mira não está no ecrã");
+        Assert.AreEqual(
+            0.35f, traco.color.a, 0.01f,
+            "a mira devia ser discreta — o GDD proíbe HUD pesado");
     }
 }

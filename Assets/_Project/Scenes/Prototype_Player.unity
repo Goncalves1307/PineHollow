@@ -606,6 +606,7 @@ GameObject:
   - component: {fileID: 315431428}
   - component: {fileID: 315431427}
   - component: {fileID: 315431429}
+  - component: {fileID: 315431430}
   m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
@@ -701,10 +702,11 @@ MonoBehaviour:
   interactionDistance: 3
   raycastMask:
     serializedVersion: 2
-    m_Bits: 4294965723
+    m_Bits: 2323
   interactionPrompt: {fileID: 817459065}
   interactionText: {fileID: 817459067}
   stateMachine: {fileID: 315431424}
+  highlightSystem: {fileID: 315431430}
 --- !u!114 &315431422
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -915,13 +917,25 @@ MonoBehaviour:
   strokes:
   - {fileID: 1329270619}
   - {fileID: 422781917}
-  idleAlpha: 0.35
-  idleScale: 1
-  focusAlpha: 0.85
-  focusScale: 1.35
-  speed: 12
-  interactionSystem: {fileID: 315431421}
+  alpha: 0.35
   stateMachine: {fileID: 315431424}
+--- !u!114 &315431430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 315431417}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ab8455fb69c514a38f8cbbb4500e4bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HighlightSystem
+  highlightTint: {r: 0.54, g: 0.35, b: 0.17, a: 1}
+  tintAmount: 0.18
+  lift: 0.12
+  fadeInSpeed: 8
+  fadeOutSpeed: 4
 --- !u!1 &405562251
 GameObject:
   m_ObjectHideFlags: 0

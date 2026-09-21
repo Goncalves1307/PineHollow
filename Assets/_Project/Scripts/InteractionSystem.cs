@@ -23,7 +23,14 @@ public class InteractionSystem : MonoBehaviour
     [Header("Estado")]
     [SerializeField] private PlayerStateMachine stateMachine;
 
+    [Header("Realce")]
+    [SerializeField] private HighlightSystem highlightSystem;
+
     private IInteractable currentInteractable;
+
+    // O GameObject de quem está em mira. Guardado à parte porque o realce
+    // precisa dos renderers e a interface não os dá.
+    private GameObject currentInteractableObject;
 
     // Quem está em mira, para quem precise de saber sem voltar a lançar o raio.
     public bool HasFocus => currentInteractable != null;
@@ -62,6 +69,7 @@ public class InteractionSystem : MonoBehaviour
     private void CheckForInteractable()
     {
         currentInteractable = null;
+        currentInteractableObject = null;
 
         if (playerCamera != null)
         {
@@ -89,16 +97,39 @@ public class InteractionSystem : MonoBehaviour
                 // GameObject que carrega o script.
                 currentInteractable =
                     hit.collider.GetComponentInParent<IInteractable>();
+
+                Component componente = currentInteractable as Component;
+
+                currentInteractableObject =
+                    componente != null ? componente.gameObject : null;
             }
         }
 
         UpdateInteractionUI();
+        UpdateHighlight();
     }
 
     private void ClearFocus()
     {
         currentInteractable = null;
+        currentInteractableObject = null;
+
         UpdateInteractionUI();
+        UpdateHighlight();
+    }
+
+    // O realce é do objecto focado, e o dono dele é este sistema — como o
+    // prompt. Em modo fotografia não há foco (a guarda do Update limpa-o), por
+    // isso o realce nunca está aceso enquanto se enquadra uma fotografia.
+    private void UpdateHighlight()
+    {
+        if (highlightSystem == null)
+            return;
+
+        if (currentInteractableObject == null)
+            highlightSystem.Clear();
+        else
+            highlightSystem.Focus(currentInteractableObject);
     }
 
     // Dono único do prompt. Mais ninguém lhe toca: quando o InspectionSystem

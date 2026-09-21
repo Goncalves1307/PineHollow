@@ -20,6 +20,7 @@ public class InteractionSystemTests
     private InteractionSystem interaction;
     private PlayerStateMachine stateMachine;
     private GameObject prompt;
+    private HighlightSystem realce;
 
     // A limpeza vive toda aqui e não no fim de cada teste: um assert que falha
     // lança, e o DestroyImmediate que viesse a seguir nunca corria — os
@@ -53,7 +54,13 @@ public class InteractionSystemTests
         Set("interactionDistance", 3f);
         Set("raycastMask", (LayerMask)Mascara);
         Set("interactionPrompt", prompt);
+        realce = host.AddComponent<HighlightSystem>();
+        typeof(HighlightSystem)
+            .GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance)
+            .Invoke(realce, null);
+
         Set("stateMachine", stateMachine);
+        Set("highlightSystem", realce);
     }
 
     [TearDown]
@@ -236,5 +243,61 @@ public class InteractionSystemTests
         Assert.IsTrue(interaction.HasFocus);
         Assert.IsTrue(prompt.activeSelf);
 
+    }
+
+    // A ponte entre o foco e o realce. Sem este teste, desligar o realce do
+    // InteractionSystem não fazia falhar nada — os testes do HighlightSystem
+    // chamam o Focus() eles próprios. É a mesma falha silenciosa da LayerMask
+    // a zero e do highlightSystem por ligar: nada acontece, e ninguém sabe.
+    [Test]
+    public void OFoco_AccionaORealceDoObjecto()
+    {
+        GameObject alvo = Box(new Vector3(0f, 0f, 2f), LayerInteractable, false);
+        alvo.AddComponent<FakeInteractable>();
+
+        Tick();
+
+        Assert.IsTrue(interaction.HasFocus, "pré-condição: devia ter foco");
+        Assert.AreSame(
+            alvo,
+            realce.Focado,
+            "o InteractionSystem não accionou o realce do objecto focado");
+    }
+
+    [Test]
+    public void PerdidoOFoco_ORealceDoObjectoSai()
+    {
+        GameObject alvo = Box(new Vector3(0f, 0f, 2f), LayerInteractable, false);
+        alvo.AddComponent<FakeInteractable>();
+
+        Tick();
+        Assert.AreSame(alvo, realce.Focado);
+
+        stateMachine.PushMode(PlayerState.Photographing);
+        Tick();
+
+        Assert.IsNull(
+            realce.Focado,
+            "o objecto ficou realçado em modo fotografia");
+    }
+
+    [Test]
+    public void ORealceAlcancaOScriptNoPai_ENaoOColliderNoFilho()
+    {
+        // Realçar só o collider deixava o resto do móvel por realçar.
+        GameObject pai = new GameObject("Movel");
+        criados.Add(pai);
+        pai.transform.position = new Vector3(0f, 0f, 2f);
+        pai.AddComponent<FakeInteractable>();
+
+        GameObject filho = Box(new Vector3(0f, 0f, 2f), LayerInteractable, false);
+        filho.transform.SetParent(pai.transform);
+
+        Tick();
+
+        Assert.AreSame(
+            pai,
+            realce.Focado,
+            "o realce ficou pelo collider em vez de subir ao objecto todo");
     }
 }

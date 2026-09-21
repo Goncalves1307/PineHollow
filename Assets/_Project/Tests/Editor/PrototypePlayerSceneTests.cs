@@ -336,20 +336,19 @@ public class PrototypePlayerSceneTests
         }
     }
 
-    // O realce da FASE 3 vive na mira. Se ela não estiver na cena e ligada,
-    // não há realce nenhum — e isso não dá erro, só silêncio.
+    // A mira é o `+` do GDD. Não reage ao foco — isso é do HighlightSystem.
     [Test]
-    public void AMiraExisteNaCenaEEstaLigadaAoFoco()
+    public void AMiraExisteNaCenaEEstaLigada()
     {
         CrosshairSystem mira = ProcurarNaCena<CrosshairSystem>();
 
         Assert.IsNotNull(
             mira,
-            "A cena não tem CrosshairSystem: o objecto focado não tem realce."
+            "A cena não tem CrosshairSystem: o GDD dá o `+` como parte da " +
+            "interface, com o prompt."
         );
 
-        foreach (string campo in
-            new[] { "crosshair", "interactionSystem", "stateMachine" })
+        foreach (string campo in new[] { "crosshair", "stateMachine" })
         {
             Object valor = (Object)typeof(CrosshairSystem)
                 .GetField(campo, BindingFlags.NonPublic | BindingFlags.Instance)
@@ -378,28 +377,32 @@ public class PrototypePlayerSceneTests
         }
     }
 
-    // A regra da direcção artística: o realce é interface, nunca luz no mundo.
-    // Se alguém puser luz num interactable, isto apanha-o — e a razão não é
-    // estética: luz no objecto focado sabota o alinhamento de fotografias.
+    // O realce do objecto focado. Sem isto ligado, o UpdateHighlight faz
+    // early-return e não há realce nenhum — sem erro, só silêncio. É a mesma
+    // forma de falha da LayerMask a zero e do stateId vazio.
     [Test]
-    public void NenhumInteractableDaCenaTemLuzPropria()
+    public void ORealceDoObjectoEstaLigadoAoInteractionSystem()
     {
-        foreach (MonoBehaviour comportamento in ComportamentosDoProjecto())
-        {
-            if (!(comportamento is IInteractable))
-                continue;
+        InteractionSystem interaccao = ProcurarNaCena<InteractionSystem>();
 
-            Light[] luzes =
-                comportamento.GetComponentsInChildren<Light>(true);
+        Assert.IsNotNull(interaccao, "A cena não tem InteractionSystem.");
 
-            Assert.AreEqual(
-                0,
-                luzes.Length,
-                $"'{comportamento.name}' tem Light própria. O realce é a mira, " +
-                "não o objecto: «sempre matéria, nunca luz» (Direcção " +
-                "Artística §7.2), e luz no objecto focado sabota o alinhamento."
-            );
-        }
+        Object realce = (Object)typeof(InteractionSystem)
+            .GetField(
+                "highlightSystem",
+                BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(interaccao);
+
+        Assert.IsNotNull(
+            realce,
+            "InteractionSystem.highlightSystem está por ligar: o objecto " +
+            "focado nunca é realçado, e isso não dá erro nenhum."
+        );
+
+        Assert.IsNotNull(
+            ProcurarNaCena<HighlightSystem>(),
+            "A cena não tem HighlightSystem."
+        );
     }
 
     private static int layerInteractableCedo()
