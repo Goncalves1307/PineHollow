@@ -22,10 +22,11 @@ public class PhotoAlignment
     [SerializeField] private string comId;
 
     [Header("Alvo")]
-    // Deslocamento em coordenadas normalizadas da imagem: (0,0) é sobreposta
-    // ao centro, (0.5, 0) é meia largura à direita. Normalizado porque a
-    // comparação desenha as fotografias em tamanhos diferentes conforme o
-    // ecrã.
+    // Deslocamento em coordenadas normalizadas: (0,0) é sobreposta à
+    // fotografia fixa, (0.5, 0) é meia largura à direita. Normalizado à
+    // LARGURA nos dois eixos — o espaço é isotrópico de propósito, senão
+    // rodar em normalizado não seria rodar em píxeis e a inversa deixava de
+    // bater num rect que não fosse quadrado.
     [SerializeField] private Vector2 posicaoAlvo;
 
     [SerializeField] private float rotacaoAlvo;
@@ -88,12 +89,14 @@ public class PhotoAlignment
             rotacaoAlvo = -rotacaoAlvo,
             escalaAlvo = 1f / escala,
 
-            // As tolerâncias de posição e de escala vivem no espaço da
-            // fotografia movida, por isso acompanham a mudança de escala. A
-            // de rotação é um ângulo e não muda.
+            // As tolerâncias vivem no espaço da fotografia movida, por isso
+            // acompanham a mudança de escala. A de rotação é um ângulo e não
+            // muda. A de escala vai a 1/s² e não a 1/s: a imagem do intervalo
+            // |e − s| ≤ t por e ↦ 1/e é ≈ t/s², e com 1/s a inversa ficava
+            // quatro vezes mais permissiva do que a directa a s = 4.
             toleranciaPosicao = toleranciaPosicao / escala,
             toleranciaRotacao = toleranciaRotacao,
-            toleranciaEscala = toleranciaEscala / escala
+            toleranciaEscala = toleranciaEscala / (escala * escala)
         };
     }
 
