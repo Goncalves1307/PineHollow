@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -172,6 +173,83 @@ public class PrototypePlayerSceneTests
             "O cursor e o Esc têm um dono único (PlayerStateMachine). " +
             "Estes passaram à frente dele:\n  " +
             string.Join("\n  ", infractores)
+        );
+    }
+
+    // Uma LayerMask a zero não é "referência por ligar" — passa despercebida ao
+    // teste das referências e deixa o raycast a não acertar em nada. Falhava em
+    // silêncio: sem prompt, sem erro, e a porta simplesmente deixava de existir.
+    [Test]
+    public void ORaycastDeInteraccaoTemMascaraEVeALayerInteractable()
+    {
+        InteractionSystem interaccao = ProcurarNaCena<InteractionSystem>();
+
+        Assert.IsNotNull(
+            interaccao,
+            "A cena não tem InteractionSystem: nada do que a FASE 3 fez corre."
+        );
+
+        LayerMask mascara = (LayerMask)typeof(InteractionSystem)
+            .GetField(
+                "interactableMask",
+                BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(interaccao);
+
+        Assert.AreNotEqual(
+            0,
+            mascara.value,
+            "interactableMask está a Nothing: o raycast não acerta em nada e " +
+            "nenhum objecto da cena é interactivo."
+        );
+
+        int layerInteractable = LayerMask.NameToLayer("Interactable");
+
+        Assert.AreNotEqual(
+            -1,
+            layerInteractable,
+            "A layer 'Interactable' desapareceu do TagManager (criada na FASE 1)."
+        );
+
+        Assert.AreNotEqual(
+            0,
+            mascara.value & (1 << layerInteractable),
+            "A máscara do raycast não inclui a layer 'Interactable'."
+        );
+    }
+
+    // Quem é interactivo tem de estar na layer que a máscara vê — senão o
+    // objecto existe, tem script, e continua sem responder ao E.
+    [Test]
+    public void TodosOsInteractablesDaCenaEstaoNaLayerInteractable()
+    {
+        int layerInteractable = LayerMask.NameToLayer("Interactable");
+
+        MonoBehaviour[] todos = Object.FindObjectsByType<MonoBehaviour>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+
+        int encontrados = 0;
+
+        foreach (MonoBehaviour comportamento in todos)
+        {
+            if (comportamento == null || !(comportamento is IInteractable))
+                continue;
+
+            encontrados++;
+
+            Assert.AreEqual(
+                layerInteractable,
+                comportamento.gameObject.layer,
+                $"'{comportamento.name}' implementa IInteractable mas está na " +
+                $"layer {comportamento.gameObject.layer}: o raycast não o vê."
+            );
+        }
+
+        Assert.Greater(
+            encontrados,
+            0,
+            "A cena não tem um único IInteractable."
         );
     }
 

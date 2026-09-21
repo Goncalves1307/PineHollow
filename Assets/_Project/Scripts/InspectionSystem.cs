@@ -13,7 +13,6 @@ public class InspectionSystem : MonoBehaviour
     [SerializeField] private float rotationSpeed = 0.15f;
 
     [Header("UI")]
-    [SerializeField] private GameObject interactionPrompt;
     [SerializeField] private GameObject inspectionControls;
 
     private GameObject inspectedObject;
@@ -44,7 +43,6 @@ public class InspectionSystem : MonoBehaviour
         if (stateMachine != null)
             stateMachine.PushMode(PlayerState.Inspecting);
 
-        interactionPrompt.SetActive(false);
         inspectionControls.SetActive(true);
 
         target.transform.SetParent(playerCamera.transform);
@@ -128,7 +126,6 @@ public class InspectionSystem : MonoBehaviour
         if (stateMachine != null)
             stateMachine.PopMode(PlayerState.Inspecting);
 
-        interactionPrompt.SetActive(true);
         inspectionControls.SetActive(false);
     }
 }

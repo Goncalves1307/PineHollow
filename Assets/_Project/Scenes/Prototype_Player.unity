@@ -684,9 +684,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
   playerCamera: {fileID: 1955434907}
   interactionDistance: 3
+  interactableMask:
+    serializedVersion: 2
+    m_Bits: 256
   interactionPrompt: {fileID: 817459065}
   interactionText: {fileID: 817459067}
-  inspectionSystem: {fileID: 315431422}
+  stateMachine: {fileID: 315431424}
 --- !u!114 &315431422
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -706,7 +709,6 @@ MonoBehaviour:
   maxDistance: 2.5
   zoomSpeed: 0.5
   rotationSpeed: 0.15
-  interactionPrompt: {fileID: 817459065}
   inspectionControls: {fileID: 717414412}
 --- !u!114 &315431423
 MonoBehaviour:
