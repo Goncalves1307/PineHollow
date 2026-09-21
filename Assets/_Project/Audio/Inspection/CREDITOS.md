@@ -10,10 +10,10 @@ este ficheiro existe para se saber de onde vieram e não se voltar a perguntar.
 
 Originais: `wood_misc_01/06/07/09` (pegar) e `wood_hit_01/03/04/08` (pousar).
 
-🔴 **Estes clips foram escolhidos por medição, não de ouvido.** Ao contrário dos passos, que o
-Diogo ouviu em play mode antes de entrarem, estes foram seleccionados por análise da forma de
-onda — ver o critério abaixo. **Falta o veredicto de ouvido.** Se algum soar mal, a troca é
-trocar o ficheiro: o sistema escolhe ao acaso do array e não sabe os nomes.
+**Estes clips foram escolhidos por medição e só depois ouvidos.** A selecção foi por análise da
+forma de onda — ver o critério abaixo — e o Diogo ouviu-os em play mode a 2026-09-21, no fim da
+FASE 4, e aceitou-os. Se algum vier a soar mal, a troca é trocar o ficheiro: o sistema escolhe ao
+acaso do array e não sabe os nomes.
 
 ## O critério de selecção
 
