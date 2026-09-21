@@ -403,6 +403,98 @@ public class PrototypePlayerSceneTests
         );
     }
 
+    // O mesmo que se fez aos passos: se alguém desligar os clips, isto falha e
+    // diz porquê, em vez de o exame voltar a ser mudo sem ninguém dar por isso.
+    [Test]
+    public void OExameTemSom()
+    {
+        InspectionSystem inspeccao = ProcurarNaCena<InspectionSystem>();
+
+        Assert.IsNotNull(inspeccao, "Não há InspectionSystem na cena.");
+
+        SerializedObject so = new SerializedObject(inspeccao);
+
+        foreach (string campo in new[] { "pickupClips", "putdownClips" })
+        {
+            SerializedProperty clips = so.FindProperty(campo);
+
+            Assert.IsNotNull(clips, $"O campo {campo} desapareceu.");
+            Assert.Greater(
+                clips.arraySize,
+                0,
+                $"Sem clips em {campo} o exame volta a ser mudo."
+            );
+
+            for (int i = 0; i < clips.arraySize; i++)
+            {
+                Assert.IsNotNull(
+                    clips.GetArrayElementAtIndex(i).objectReferenceValue,
+                    $"{campo}[{i}] está vazio."
+                );
+            }
+        }
+    }
+
+    // O GDD proíbe HUD permanente. Se alguém deixar um destes activo no editor,
+    // o texto fica no ecrã desde o arranque.
+    [Test]
+    public void OEcraDaInspeccaoComecaEscondido()
+    {
+        InspectionSystem inspeccao = ProcurarNaCena<InspectionSystem>();
+
+        Assert.IsNotNull(inspeccao, "Não há InspectionSystem na cena.");
+
+        SerializedObject so = new SerializedObject(inspeccao);
+
+        foreach (string campo in new[] { "inspectionControls", "descriptionText" })
+        {
+            Object alvo = so.FindProperty(campo).objectReferenceValue;
+
+            Assert.IsNotNull(alvo, $"O campo {campo} está por ligar.");
+
+            GameObject go = alvo is GameObject
+                ? (GameObject)alvo
+                : ((Component)alvo).gameObject;
+
+            Assert.IsFalse(
+                go.activeSelf,
+                $"'{go.name}' está activo na cena: vira HUD permanente."
+            );
+        }
+    }
+
+    // Uma descrição vazia deixava a funcionalidade inerte no caminho por
+    // omissão — o código todo lá, e nada a acontecer a quem carrega no E.
+    [Test]
+    public void OObjectoExaminavelTemAlgoParaDizer()
+    {
+        InspectionInteractable[] examinaveis =
+            Object.FindObjectsByType<InspectionInteractable>(
+                FindObjectsInactive.Include
+            );
+
+        Assert.Greater(
+            examinaveis.Length,
+            0,
+            "Não há nada examinável na cena: o caminho da descrição nunca corre."
+        );
+
+        foreach (InspectionInteractable examinavel in examinaveis)
+        {
+            SerializedObject so = new SerializedObject(examinavel);
+
+            Assert.IsFalse(
+                string.IsNullOrWhiteSpace(so.FindProperty("descricao").stringValue),
+                $"'{examinavel.name}' não tem descrição: examiná-lo não diz nada."
+            );
+
+            Assert.IsFalse(
+                string.IsNullOrWhiteSpace(examinavel.StateId),
+                $"'{examinavel.name}' não tem stateId: a FASE 7 não o encontra."
+            );
+        }
+    }
+
     private static int layerInteractableCedo()
     {
         return LayerMask.NameToLayer("Interactable");

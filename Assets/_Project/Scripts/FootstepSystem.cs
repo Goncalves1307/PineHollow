@@ -8,9 +8,9 @@ using UnityEngine;
 // sprint pi/11 a 5 m/s ≈ 1.4 m, agachado pi/5 a 1.5 m/s ≈ 0.95 m. Se mexeres
 // nas velocidades ou nas frequências do bob, isto sai do sítio — e ouve-se.
 //
-// O projecto ainda não tem um único clip de áudio (Assets/_Project/Audio/ está
-// vazia). Sem clips isto corre em silêncio e não estoira — a estrutura fica
-// pronta para quando os assets existirem.
+// Sem clips isto corre em silêncio e não estoira. Já há: nove em
+// Assets/_Project/Audio/Footsteps/, madeira e terra, com o CREDITOS.md a dizer
+// de onde vieram. A guarda fica — a pedra ainda está por preencher.
 [RequireComponent(typeof(AudioSource))]
 public class FootstepSystem : MonoBehaviour
 {

@@ -1,7 +1,7 @@
 # Pine Hollow — Estado do desenvolvimento
 
 > Auditoria das 27 fases do `Pine_Hollow_Plano_Completo_Desenvolvimento.md` contra o código real.
-> **Última verificação: 2026-09-21** (revista no fim da FASE 2), contra a árvore de trabalho
+> **Última verificação: 2026-09-21** (revista no fim da FASE 4), contra a árvore de trabalho
 > (`Assets/_Project/Scripts/`, `Assets/_Project/Scenes/Prototype_Player.unity`,
 > `ProjectSettings/`). A FASE 1 fechou nesse dia e os caminhos mudaram: tudo vive em
 > `Assets/_Project/` agora.
@@ -29,8 +29,8 @@ Dos **12 milestones** do plano: **3 fechados, o 4.º a meio, 8 por abrir.**
 | 11 | Conteúdo narrativo completo | ❌ |
 | 12 | Polimento e lançamento | ❌ |
 
-Código total: **12 scripts, ~890 linhas**, duas cenas (`Bootstrap` e `Prototype_Player`),
-mais um validador de editor.
+Código total: **22 scripts, ~1.500 linhas**, duas cenas (`Bootstrap` e `Prototype_Player`),
+mais um validador de editor e **81 testes EditMode** em sete ficheiros.
 
 ---
 
@@ -79,14 +79,11 @@ medição real com arte na cena manda sobre os números de `Producao.md` §1.4.
 **Verificação:** `Assets/_Project/Scripts/Editor/Fase1Validacao.cs` corre em batchmode com
 `-executeMethod Fase1Validacao.Correr` e sai a 0. Cobre configuração, não comportamento.
 
-🔴 **O raycast de interação continua sem layer mask — e é de propósito.**
-`InteractionSystem.CheckForInteractable()` (`InteractionSystem.cs:48-52`) usa o overload de três
-argumentos, sem `layerMask` e sem `QueryTriggerInteraction`, e o projecto mantém
-`m_QueriesHitTriggers: 1`. A FASE 1 entregou as layers de que a correcção precisa; a correcção em
-si é a `869f4yb37`, na FASE 3. **Continua a ter de estar resolvida antes da Fase 10 (casa).**
-O flag global fica a `1` por escolha: mudá-lo alterava o comportamento de todos os queries do
-projecto, incluindo os que ainda não existem. A alternativa é passar
-`QueryTriggerInteraction.Ignore` na chamada.
+✅ **O raycast de interação já tem layer mask** (`869f4yb37`, FASE 3). `InteractionSystem.cs:17`
+tem o `raycastMask` e a chamada passa `QueryTriggerInteraction.Ignore`; o flag global
+`m_QueriesHitTriggers` fica a `1` por escolha. ⚠️ **A máscara não é «só a layer Interactable», e
+não pode passar a ser**: o raio tem de considerar a geometria do mundo, senão o foco atravessa as
+paredes. Quem responde decide-se no fim, por ter `IInteractable`.
 
 ⚠️ **A distância de sombras (80 m) é derivada, não medida.** Sai de `Producao.md` §1.9, pelos
 3 km² do mapa. Nada correu em play mode com conteúdo a sério. A primeira medição real manda.
@@ -130,11 +127,11 @@ vertical (`±85°`), cursor lock.
 | Texto contextual | ✅ |
 | Feedback visual | ❌ há texto, não há highlight |
 
-**2.4 Sensação** ⚠️ parcial — aceleração/desaceleração e head bob feitos em
-`PlayerController.cs` (o bob compõe com a altura do agachar, não é absoluto). Footsteps e sons por
-superfície **existem como estrutura e correm em silêncio**: `FootstepSystem.cs` conta distância
-percorrida e `SurfaceAudio.cs` põe-se no objecto pisado, mas `Assets/_Project/Audio/` continua
-vazia e **não há um único clip no projecto**. A sensibilidade existe como campo; o ecrã de
+**2.4 Sensação** ✅ — aceleração/desaceleração e head bob feitos em `PlayerController.cs` (o bob
+compõe com a altura do agachar, não é absoluto). Footsteps e sons por superfície **já soam**: nove
+clips CC0 em `Assets/_Project/Audio/Footsteps/` (madeira e terra), com `CREDITOS.md`. ⚠️ `Stone/`
+continua vazia, e o `CREDITOS.md` diz por que ordem é que as superfícies que faltam interessam —
+betão e metal primeiro, que é o chão da fábrica. A sensibilidade existe como campo; o ecrã de
 definições é FASE 12.
 
 **2.5 Estados** ✅ — `PlayerStateMachine.cs` é o dono único do estado, do cursor e do `Esc`.
@@ -144,26 +141,45 @@ distinguir (`PhotoPreview`, `ViewingAlbum`, `ViewingPhoto`). Crouch em `LeftCtrl
 de tecto antes de levantar. **`Interacting` e `Flashback` estão declarados mas ainda sem
 transições** — a interacção de hoje é instantânea, e o `Flashback` espera o world state da FASE 7.
 
-### FASE 3 — Sistema de interação · ~65%
+### FASE 3 — Sistema de interação · ✅ **fechada**
 
 | Item | Estado |
 |---|---|
 | Raycast / Interface / Interactables / Prompt / Distância máxima | ✅ (3 m) |
-| Highlight subtil | ❌ |
-| Prioridade | ❌ o raycast devolve o primeiro collider e mais nada |
+| Layer mask e oclusão | ✅ `869f4yb37` |
+| Highlight subtil | ✅ `HighlightSystem.cs`, por `MaterialPropertyBlock` |
+| Prioridade | ⚠️ o raycast devolve o primeiro collider; nunca fez falta até hoje |
 
-Primeiros objectos: **porta ✅**, **objecto examinável ✅**, gaveta ❌, interruptor ❌, documento ❌,
-fotografia ❌. São estes quatro em falta que o Capítulo 1 precisa.
+Primeiros objectos: **porta ✅**, **objecto examinável ✅**, **gaveta ✅**, **interruptor ✅**,
+**documento ✅**, fotografia ❌ (é FASE 5).
 
-### FASE 4 — Sistema de inspeção · ~70%
+🔴 **O realce vai por `MaterialPropertyBlock` e nunca por `renderer.material`**: o projecto não tem
+materiais próprios e todos os objectos partilham o material por omissão — pintar um pintava a cena
+inteira. E é matéria a aquecer sobre o `_BaseColor`, **nunca emissão**: com a keyword `_EMISSION`
+desligada, escrever `_EmissionColor` não produz efeito nenhum e o realce sai mudo sem erro.
+
+### FASE 4 — Sistema de inspeção · ✅ **fechada**
 
 Pick up ✅, modo de inspeção ✅, rotação ✅, zoom ✅ (scroll, 0.7–2.5 m), movimento controlado ✅,
-sair ✅. Descrições ❌, sons ❌.
+sair ✅, **descrições ✅**, **sons ✅** (pegar e pousar; oito clips CC0 em
+`Assets/_Project/Audio/Inspection/`).
 
-Aplicação inicial: só o objecto genérico de teste. Documentos, fotografias e pistas ❌.
+A descrição vive numa linha própria do HUD da inspecção e **não** no `ReadingSystem` — aquele painel
+é opaco e centrado, e taparia o objecto que se está a descrever. Entra por parâmetro **opcional**
+(`Inspect(target, descricao = null)`), para o `PhotoInteractable` da FASE 5 poder reutilizar o
+sistema sem estorvo.
 
-✅ `inspectionDistance` já é respeitado (corrigido na FASE 2): o campo do inspector é a distância
-inicial e o zoom passou a viver num `currentDistance` privado.
+Aplicação: o objecto genérico de teste ✅ e os documentos ✅ (`DocumentInteractable` +
+`ReadingSystem`). Fotografias ❌ (FASE 5) e pistas ❌ (FASE 6).
+
+✅ `inspectionDistance` já é respeitado (corrigido na FASE 2), e desde a FASE 4 **também é
+limitado**: um valor de inspector fora de 0.7–2.5 punha o objecto onde o scroll não chegava.
+
+⚠️ **O som de rodar ficou deliberadamente de fora.** `PlayOneShot` serve eventos pontuais; um som
+de rotação é um *loop* com volume em função da velocidade angular, padrão que o projecto não tem.
+
+🔴 **Os clips de inspecção foram escolhidos por medição, não de ouvido** — ver o `CREDITOS.md` da
+pasta. Falta o veredicto em play mode.
 
 ### FASE 5 — Sistema de fotografia · ~15%, e o número engana
 

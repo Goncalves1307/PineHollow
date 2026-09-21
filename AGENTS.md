@@ -19,10 +19,12 @@ Scope: compact open world ~3 km², town of ~2.800 inhabitants, 8 chapters, ~7 fl
 endings. First technical objective is a **15–20 minute vertical slice** (arrival → house → studio →
 first photographs → first alignment → first 1986 flashback → altered photograph), not the full town.
 
-**Current build reality: a mechanics sandbox.** 11 scripts, one playable scene, ~840 lines. Walk,
-look, sprint, interact at short range (`E`), pick an object up and rotate it in front of the
-camera, take screenshot-style photos into an in-memory album. No narrative content, no NPCs, no
-audio, no save, no era system. `bundleVersion 0.1.0`, `companyName: DefaultCompany`.
+**Current build reality: a mechanics sandbox.** 22 scripts, two scenes, ~1.500 lines, 81 EditMode
+tests. Walk, look, sprint, crouch, interact at short range (`E`) with a highlight on the focused
+object, open a door, a drawer and a switch, read a document, pick an object up to rotate, zoom and
+read its description, take screenshot-style photos into an in-memory album. Footsteps and
+object-handling sounds play. No narrative content, no NPCs, no save, no era system.
+`bundleVersion 0.1.0`, `companyName: DefaultCompany`.
 
 Docs, comments, `Debug.Log` strings and UI text are in **pt-PT**. Match that when editing. Commits
 in pt-PT too.
@@ -105,8 +107,21 @@ grep -nE "error CS|warning CS" Logs/Editor.log | tail -20
 
 `Logs/Editor.log` is append-only across sessions and currently ~10MB — always `tail`, never `cat`.
 
-**There is exactly one test file**, added in FASE 2:
-`Assets/_Project/Tests/Editor/PlayerStateMachineTests.cs` (EditMode, 20 tests over the mode stack).
+**There are seven test files**, all EditMode, **81 tests**, in `Assets/_Project/Tests/Editor/`:
+`PlayerStateMachineTests`, `InteractionSystemTests`, `InteractablesTests`, `InspectionSystemTests`,
+`HighlightSystemTests`, `CrosshairSystemTests` and `PrototypePlayerSceneTests` (this last one opens
+the real scene and asserts the inspector wiring, because the scene is edited as YAML by hand).
+
+```bash
+# os testes -- e repara que NAO leva -quit: com ele o Unity sai antes de os correr
+/home/diogo/dados/Unity/6000.6.2f1/Editor/Unity \
+  -batchmode -nographics \
+  -projectPath /home/diogo/dados/Unity/PineHollow \
+  -runTests -testPlatform EditMode -testResults /tmp/unity-tests.xml -logFile /tmp/unity-tests.log
+```
+
+**`-quit` and `-runTests` do not go together.** With both, the log says `Batchmode quit
+successfully invoked` and no results file is written at all — it looks like a crash and is not.
 
 **There are still zero `.asmdef` files, and that is deliberate.** All game code compiles into the
 default `Assembly-CSharp`, and an asmdef **cannot reference a predefined assembly** — so a test
@@ -144,7 +159,7 @@ FASE 1.
 
 ## Architecture
 
-Sixteen scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no
+Twenty-two scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no
 namespaces (plus an editor-only validator under `Editor/`, and `IInteractable`/`PlayerState`,
 which are not `MonoBehaviour`s). All of them hang off the `Player` GameObject or off the object
 they act on. Four clusters:
@@ -157,15 +172,26 @@ before touching any of them.
 **Interaction** — [`IInteractable`](Assets/_Project/Scripts/IInteractable.cs) is the whole contract:
 `Interact()` + `GetInteractionText()`. [`InteractionSystem`](Assets/_Project/Scripts/InteractionSystem.cs)
 raycasts 3m from the player camera every frame, `GetComponent<IInteractable>()` on the hit, and
-drives the `[E] <text>` prompt. Implementors: `DoorInteractable` (slerps a pivot 90°),
-`InspectionInteractable` (hands the object to `InspectionSystem`), `TestInteractable` (a debug stub
-— safe to delete once something real replaces it).
+drives the `[E] <text>` prompt, and hands the focused object to `HighlightSystem`. Implementors:
+`DoorInteractable` (slerps a pivot 90°), `DrawerInteractable` (slides a body), `SwitchInteractable`,
+`DocumentInteractable` (hands title+body to `ReadingSystem`), `InspectionInteractable` (hands the
+object and its description to `InspectionSystem`). Every one of them carries a read-only state
+property and a `stateId`, which is the minimum FASE 7 needs to find them across the two eras.
 
 **Inspection** — [`InspectionSystem`](Assets/_Project/Scripts/InspectionSystem.cs) reparents the target to
-the camera transform, caches `position`/`rotation`/`parent`, locks the player, and restores on
-`Esc`. `InteractionSystem.Update` early-returns while `IsInspecting`, so it is the one place where
-a system explicitly defers to another. This is the system the GDD's photo inspection (rotate, flip,
-zoom, read the back) should grow out of.
+the camera transform, caches `position`/`rotation`/`parent`, pushes `Inspecting`, and restores on
+`Esc`. `InteractionSystem.Update` defers on `OpenModeCount > 0`. This is the system the GDD's photo
+inspection (rotate, flip, zoom, read the back) should grow out of.
+
+Its public API is exactly `IsInspecting` and `Inspect(GameObject target, string descricao = null)`,
+and **the `descricao` is optional on purpose**: the FASE 5 `PhotoInteractable` reuses this system
+and a photograph needs a description *and* a back. Keep new parameters optional. Rotation and zoom
+only run while `IsTopMode(Inspecting)` — without that, any layer opened on top leaves the mouse
+spinning the object behind it. The description is its own line in the inspection HUD and **not** the
+`ReadingSystem`: that panel is 760×520 and opaque, so it would cover the very object being
+described. Pick-up and put-down sounds share the `Player`'s `AudioSource` with the footsteps —
+a second one on the same GameObject would make `FootstepSystem`'s `GetComponent` fallback depend on
+component order.
 
 **Photography** — [`PhotographySystem`](Assets/_Project/Scripts/PhotographySystem.cs) drives the
 photo flow (`F` enters photo mode, LMB captures, `Esc` backs out one level) but is **no longer the
@@ -217,15 +243,13 @@ or a `[SerializeField]` reference instead.
 
 ## Things that will bite you
 
-**The interaction raycast still has no layer mask.**
-[`InteractionSystem.CheckForInteractable()`](Assets/_Project/Scripts/InteractionSystem.cs#L41)
-calls the three-argument `Physics.Raycast` overload — no `layerMask`, no `QueryTriggerInteraction`
-— so it falls back to `UseGlobal` and `DynamicsManager.m_QueriesHitTriggers: 1` makes it hit
-triggers. Today nothing reproduces it (the scene has no trigger volume and three colliders), but
-from Fase 10 on the first trigger volume in front of the camera steals focus from the object
-behind it. FASE 1 created the layers this needs; wiring the mask is `869f4yb37`, in Fase 3. Note
-the global flag stays at `1` on purpose — pass `QueryTriggerInteraction.Ignore` at the call site
-rather than changing behaviour for every query in the project.
+**~~The interaction raycast has no layer mask~~ — done in FASE 3** (`869f4yb37`).
+`InteractionSystem` now has a `raycastMask` and passes `QueryTriggerInteraction.Ignore` at the call
+site; the global `m_QueriesHitTriggers` stays at `1` on purpose. **The mask is not "only the
+`Interactable` layer", and must not become that:** the raycast has to *consider* world geometry too,
+or the focus goes through walls and `E` opens the door on the other side of the partition. What the
+mask excludes is only what must never stop the ray — the player's own colliders, the UI and the
+render-only layers. Who *answers* is decided at the end, by having `IInteractable`.
 
 
 **The album is unreachable.** `PhotoAlbumSystem.OpenAlbum()` ([PhotoAlbumSystem.cs:18](Assets/_Project/Scripts/PhotoAlbumSystem.cs#L18))
@@ -280,9 +304,11 @@ is `InteractionSystem.cs`'s and the serialised fields are `InteractionSystem`'s.
 string left from renaming the file; Unity binds by GUID. Harmless — do not hand-edit the YAML to
 "correct" it.
 
-**`InspectionInteractable` calls `FindFirstObjectByType` in `Interact()`** — a per-interaction
-scene-wide search, and the one compiler warning this project emits (CS0618, deprecated). Wire an
-`[SerializeField] InspectionSystem` like every other script here does.
+**~~`InspectionInteractable` calls `FindFirstObjectByType`~~ — done in FASE 4** (`869f4yb3p`). It
+takes an `[SerializeField] InspectionSystem` like every other script here. **The project now
+compiles with zero warnings**, which only became a usable signal once the other sixteen CS0618 in
+`Fase1Validacao.cs` and `PrototypePlayerSceneTests.cs` went too. Keep it at zero: with a log full of
+warnings, nobody notices the next one.
 
 ## Design constraints that bind the code
 
