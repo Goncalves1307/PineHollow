@@ -24,6 +24,11 @@ public enum PlayerState
     ViewingAlbum,
     ViewingPhoto,
 
+    // Duas fotografias lado a lado ou sobrepostas, com escala, posição e
+    // rotação no rato. Abre por cima do álbum: o Esc fecha a comparação e
+    // devolve ao álbum, não ao jogo.
+    ComparingPhotos,
+
     // Previsto pelo plano (2.5) mas inalcançável até à FASE 7: o world state
     // 2026/1986 ainda não existe, e é ele que faz entrar e sair daqui.
     Flashback

@@ -249,6 +249,10 @@ public class PlayerStateMachine : MonoBehaviour
             // As únicas camadas que se usam com o rato.
             case PlayerState.ViewingAlbum:
             case PlayerState.ViewingPhoto:
+
+            // Alinhar uma fotografia sobre a outra é arrastar com o rato:
+            // sem o cursor livre não há como lá chegar.
+            case PlayerState.ComparingPhotos:
                 return true;
 
             default:
