@@ -76,11 +76,14 @@ public class PhotoAlbumSystem : MonoBehaviour
     {
         ClearAlbum();
 
-        if (photographySystem == null)
+        // O Tab tornou este caminho alcançável pela primeira vez: até agora
+        // nada chamava o RefreshAlbum, e por isso nunca se soube o que ele
+        // fazia com uma dependência por ligar.
+        if (photographySystem == null || photoList == null || photoThumbnailPrefab == null)
         {
             Debug.LogError(
-                $"{name}: PhotographySystem por ligar no inspector — " +
-                "o álbum abre vazio.",
+                $"{name}: PhotographySystem, lista ou prefab da miniatura por " +
+                "ligar no inspector — o álbum abre vazio.",
                 this
             );
 
@@ -112,7 +115,15 @@ public class PhotoAlbumSystem : MonoBehaviour
             seleccionadas.RemoveAt(0);
 
         if (seleccionadas.Count == 2)
+        {
             AbrirComparacao();
+
+            // A selecção considera-se consumida ao abrir a comparação. Sem
+            // isto, fechar a comparação e clicar numa terceira fotografia
+            // reabria-a logo, emparelhada com a última do par anterior — o
+            // jogador só queria começar uma escolha nova.
+            seleccionadas.Clear();
+        }
     }
 
     private void AbrirComparacao()
@@ -157,6 +168,9 @@ public class PhotoAlbumSystem : MonoBehaviour
 
     private void ClearAlbum()
     {
+        if (photoList == null)
+            return;
+
         for (int i = photoList.childCount - 1; i >= 0; i--)
         {
             Destroy(photoList.GetChild(i).gameObject);

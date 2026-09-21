@@ -231,8 +231,16 @@ public class PhotographySystem : MonoBehaviour
         // A fotografia tirada pelo jogador é 2026 — é o presente do jogo. Não
         // tem autor nem verso: é um registo do que ele viu, e o álbum
         // distingue-a das que encontrou por isso mesmo.
+        // 2026 é o presente do jogo e está no cânone. A data por extenso é a
+        // hora a que foi tirada — «Agora» não é formato de data nenhum, e o
+        // álbum mostra este campo ao lado das fotografias de 1986 que têm
+        // dia, mês e hora.
         capturedPhotos.Add(
-            PhotoData.DeCaptura(newPhoto, 2026, "Agora")
+            PhotoData.DeCaptura(
+                newPhoto,
+                2026,
+                System.DateTime.Now.ToString("dd 'de' MMMM 'de' yyyy, HH:mm")
+            )
         );
 
         photoImage.texture = newPhoto;
@@ -301,6 +309,17 @@ public class PhotographySystem : MonoBehaviour
     {
         if (photoAlbum.activeSelf)
         {
+            // Só fecha se for ele o de cima. Com a comparação ou o viewer
+            // abertos por cima, isto fazia PopMode do MEIO da pilha e
+            // desligava o painel por baixo de outro que continuava aberto: o
+            // Esc seguinte atirava o jogador para o mundo sem passar pelo
+            // álbum.
+            if (stateMachine != null &&
+                !stateMachine.IsTopMode(PlayerState.ViewingAlbum))
+            {
+                return;
+            }
+
             photoAlbumSystem.CloseAlbum();
             photoAlbum.SetActive(false);
 

@@ -16,6 +16,12 @@ using UnityEngine;
 )]
 public class PhotoAsset : ScriptableObject
 {
+    // A resolução das fotografias encontradas. Nada a ver com os 256×256 da
+    // RenderTexture de captura: aquilo é o que o jogador tira, isto é o que
+    // ele acha e vai ter de examinar ao pormenor.
+    public const int LarguraAutorada = 2048;
+    public const int AlturaAutorada = 1368;
+
     [SerializeField] private PhotoData fotografia = new PhotoData();
 
     // Cópia nova a cada chamada. Quem carregar a mesma fotografia duas vezes
@@ -37,6 +43,21 @@ public class PhotoAsset : ScriptableObject
         {
             Debug.LogWarning(
                 $"{name}: fotografia sem imagem — aparece em branco no álbum.",
+                this
+            );
+        }
+        else if (fotografia.Imagem.width != LarguraAutorada ||
+                 fotografia.Imagem.height != AlturaAutorada)
+        {
+            // As fotografias encontradas são desenhadas em ecrã inteiro no
+            // viewer e sobrepostas na comparação: abaixo desta resolução
+            // perde-se o detalhe que o jogador tem de encontrar na imagem.
+            // Os 2048×1368 são múltiplos de 4 (exigência de compressão) e
+            // mantêm a proporção 3:2 da fotografia de 35 mm.
+            Debug.LogWarning(
+                $"{name}: a imagem é {fotografia.Imagem.width}×" +
+                $"{fotografia.Imagem.height} e as fotografias autoradas são " +
+                $"{LarguraAutorada}×{AlturaAutorada}.",
                 this
             );
         }

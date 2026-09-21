@@ -130,7 +130,7 @@ public class PhotoViewerSystem : MonoBehaviour
 
         if (versoTexto != null)
         {
-            versoTexto.text = Fotografia != null ? Fotografia.Verso : string.Empty;
+            versoTexto.text = Versar(Fotografia);
             versoTexto.gameObject.SetActive(!frente);
         }
     }
@@ -150,6 +150,34 @@ public class PhotoViewerSystem : MonoBehaviour
 
         if (fotografia.Personagens.Count > 0)
             Acrescentar(texto, string.Join(", ", fotografia.Personagens));
+
+        return texto.ToString();
+    }
+
+    // O verso é o que lá está escrito à mão, mais os metadados — película,
+    // máquina, número de negativo. É nas costas de uma fotografia que essas
+    // coisas vivem, e era o único item da checklist que o tipo carregava e
+    // nada mostrava.
+    public static string Versar(PhotoData fotografia)
+    {
+        if (fotografia == null)
+            return string.Empty;
+
+        StringBuilder texto = new StringBuilder();
+
+        Acrescentar(texto, fotografia.Verso);
+
+        foreach (PhotoMetadata entrada in fotografia.Metadados)
+        {
+            if (entrada == null || string.IsNullOrWhiteSpace(entrada.Valor))
+                continue;
+
+            string chave = string.IsNullOrWhiteSpace(entrada.Chave)
+                ? string.Empty
+                : entrada.Chave + ": ";
+
+            Acrescentar(texto, chave + entrada.Valor);
+        }
 
         return texto.ToString();
     }

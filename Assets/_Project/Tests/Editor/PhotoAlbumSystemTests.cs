@@ -333,8 +333,12 @@ public class PhotoAlbumSystemTests
     }
 
     [Test]
-    public void Seleccionar_UmaTerceira_TrocaAMaisAntigaEmVezDeIgnorar()
+    public void Seleccionar_UmaTerceira_ComecaUmaEscolhaNova()
     {
+        // Antes a terceira empurrava a mais antiga para fora e reabria a
+        // comparação com um par que ninguém escolheu. Agora a selecção é
+        // consumida ao abrir a comparação, e a terceira é o princípio de
+        // outra escolha.
         PhotographySystem fotografia = SistemaMontado(
             out _,
             out PhotoAlbumSystem album,
@@ -353,11 +357,14 @@ public class PhotoAlbumSystemTests
 
         album.AlternarSeleccao(a);
         album.AlternarSeleccao(b);
+
+        Assert.AreSame(a, comparacao.Fixa, "o par escolhido foi o que abriu");
+        Assert.AreSame(b, comparacao.Movel);
+
         album.AlternarSeleccao(c);
 
-        Assert.AreEqual(2, album.Seleccionadas.Count);
-        Assert.AreSame(b, album.Seleccionadas[0]);
-        Assert.AreSame(c, album.Seleccionadas[1]);
+        Assert.AreEqual(1, album.Seleccionadas.Count);
+        Assert.AreSame(c, album.Seleccionadas[0]);
     }
 
     [Test]
@@ -379,5 +386,75 @@ public class PhotoAlbumSystemTests
         fotografia.TogglePhotoAlbum();
 
         Assert.AreEqual(0, album.Seleccionadas.Count);
+    }
+
+    [Test]
+    public void AbrirAComparacao_ConsomeASeleccao()
+    {
+        // Sem isto, fechar a comparação e clicar numa terceira fotografia
+        // reabria-a logo, emparelhada com a última do par anterior — o
+        // jogador só queria começar uma escolha nova.
+        PhotographySystem fotografia = SistemaMontado(
+            out _,
+            out PhotoAlbumSystem album,
+            out _,
+            out PhotoComparisonSystem comparacao
+        );
+
+        PhotoData a = Foto("{\"id\":\"a\"}");
+        PhotoData b = Foto("{\"id\":\"b\"}");
+        PhotoData c = Foto("{\"id\":\"c\"}");
+
+        fotografia.AddPhoto(a);
+        fotografia.AddPhoto(b);
+        fotografia.AddPhoto(c);
+        fotografia.TogglePhotoAlbum();
+
+        album.AlternarSeleccao(a);
+        album.AlternarSeleccao(b);
+
+        Assert.AreEqual(0, album.Seleccionadas.Count, "a selecção não foi consumida");
+
+        comparacao.Fechar();
+        album.AlternarSeleccao(c);
+
+        Assert.AreEqual(1, album.Seleccionadas.Count);
+        Assert.AreSame(c, album.Seleccionadas[0]);
+        Assert.IsNull(comparacao.Fixa, "reabriu a comparação com um par que ninguém escolheu");
+    }
+
+    [Test]
+    public void Tab_ComACompacaoPorCima_NaoFechaOAlbumDoMeioDaPilha()
+    {
+        // Fazia PopMode do MEIO da pilha e desligava o painel por baixo de
+        // outro que continuava aberto: o Esc seguinte atirava o jogador para
+        // o mundo sem passar pelo álbum.
+        PhotographySystem fotografia = SistemaMontado(
+            out PlayerStateMachine maquina,
+            out PhotoAlbumSystem album,
+            out GameObject painel,
+            out _
+        );
+
+        PhotoData a = Foto("{\"id\":\"a\"}");
+        PhotoData b = Foto("{\"id\":\"b\"}");
+
+        fotografia.AddPhoto(a);
+        fotografia.AddPhoto(b);
+        fotografia.TogglePhotoAlbum();
+
+        album.AlternarSeleccao(a);
+        album.AlternarSeleccao(b);
+
+        Assert.IsTrue(maquina.IsTopMode(PlayerState.ComparingPhotos));
+
+        fotografia.TogglePhotoAlbum();
+
+        Assert.IsTrue(painel.activeSelf, "o álbum fechou por baixo da comparação");
+        Assert.IsTrue(album.IsOpen);
+        Assert.IsTrue(
+            maquina.IsModeOpen(PlayerState.ViewingAlbum),
+            "o ViewingAlbum saiu do meio da pilha"
+        );
     }
 }
