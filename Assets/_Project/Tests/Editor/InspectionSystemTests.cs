@@ -216,6 +216,20 @@ public class InspectionSystemTests
         Assert.IsFalse(texto.gameObject.activeSelf);
     }
 
+    // Uma dependência de UI por ligar tem de se queixar. Calada, dá um exame
+    // sem controlos nem descrição e ninguém percebe porquê.
+    [Test]
+    public void AoArrancar_ComOEcraPorLigar_Queixa_se()
+    {
+        InspectionSystem sistema = SistemaMontado(out _, out _, out _);
+
+        Campo(sistema, "inspectionControls").SetValue(sistema, null);
+
+        LogAssert.Expect(LogType.Error, new Regex("ecrã da inspecção por ligar"));
+
+        Invocar(sistema, "Start");
+    }
+
     // Enquanto não houver clips — e houve meses em que não houve — isto tem de
     // correr em silêncio e não estoirar.
     [Test]

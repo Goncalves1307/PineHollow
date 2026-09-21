@@ -52,10 +52,31 @@ public class InspectionSystem : MonoBehaviour
     {
         if (inspectionSource == null)
             inspectionSource = GetComponent<AudioSource>();
+
+        if (inspectionSource != null)
+        {
+            // O som é do objecto que o jogador tem nas mãos: 2D, sem atenuação
+            // por distância. O FootstepSystem já o põe assim, mas depender
+            // disso partia-se no dia em que ele saísse do Player.
+            inspectionSource.spatialBlend = 0f;
+        }
     }
 
     private void Start()
     {
+        // Uma dependência de UI por ligar não pode ficar calada. Não trava a
+        // inspecção — o objecto vem à mão à mesma —, mas diz-se uma vez, aqui,
+        // e não a cada exame. O realce mudo, a LayerMask a zero e o stateId
+        // vazio foram todos isto: nada acontece, e ninguém sabe porquê.
+        if (inspectionControls == null || descriptionText == null)
+        {
+            Debug.LogError(
+                $"{name}: ecrã da inspecção por ligar no inspector — " +
+                "examinar não mostra os controlos nem a descrição.",
+                this
+            );
+        }
+
         // Não depender do que ficou guardado na cena. Um GameObject deixado
         // activo no editor virava HUD permanente, que o GDD proíbe, e ninguém
         // dava por isso até abrir o jogo.

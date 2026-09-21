@@ -19,7 +19,7 @@ Scope: compact open world ~3 km², town of ~2.800 inhabitants, 8 chapters, ~7 fl
 endings. First technical objective is a **15–20 minute vertical slice** (arrival → house → studio →
 first photographs → first alignment → first 1986 flashback → altered photograph), not the full town.
 
-**Current build reality: a mechanics sandbox.** 22 scripts, two scenes, ~1.500 lines, 81 EditMode
+**Current build reality: a mechanics sandbox.** 22 scripts, two scenes, ~2.450 lines, 81 EditMode
 tests. Walk, look, sprint, crouch, interact at short range (`E`) with a highlight on the focused
 object, open a door, a drawer and a switch, read a document, pick an object up to rotate, zoom and
 read its description, take screenshot-style photos into an in-memory album. Footsteps and

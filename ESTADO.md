@@ -29,7 +29,7 @@ Dos **12 milestones** do plano: **3 fechados, o 4.º a meio, 8 por abrir.**
 | 11 | Conteúdo narrativo completo | ❌ |
 | 12 | Polimento e lançamento | ❌ |
 
-Código total: **22 scripts, ~1.500 linhas**, duas cenas (`Bootstrap` e `Prototype_Player`),
+Código total: **22 scripts, ~2.450 linhas**, duas cenas (`Bootstrap` e `Prototype_Player`),
 mais um validador de editor e **81 testes EditMode** em sete ficheiros.
 
 ---
