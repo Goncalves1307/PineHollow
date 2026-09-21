@@ -253,6 +253,53 @@ public class PrototypePlayerSceneTests
         );
     }
 
+    // O quinto caso: o prompt tem UM dono. Não basta o InteractionSystem
+    // comportar-se bem — é preciso que mais ninguém tenha por onde lhe mexer.
+    // Enquanto o InspectionSystem também o referenciava, sair da inspecção
+    // fazia-o piscar com o texto do objecto que já não estava em mira.
+    [Test]
+    public void OPromptDeInteraccaoTemUmSoDono()
+    {
+        InteractionSystem interaccao = ProcurarNaCena<InteractionSystem>();
+        Assert.IsNotNull(interaccao, "A cena não tem InteractionSystem.");
+
+        GameObject prompt = (GameObject)typeof(InteractionSystem)
+            .GetField(
+                "interactionPrompt",
+                BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(interaccao);
+
+        Assert.IsNotNull(prompt, "O InteractionSystem não tem prompt ligado.");
+
+        foreach (MonoBehaviour comportamento in ComportamentosDoProjecto())
+        {
+            if (comportamento is InteractionSystem)
+                continue;
+
+            foreach (FieldInfo campo in comportamento.GetType().GetFields(
+                BindingFlags.NonPublic |
+                BindingFlags.Public |
+                BindingFlags.Instance))
+            {
+                if (!typeof(Object).IsAssignableFrom(campo.FieldType))
+                    continue;
+
+                Object valor = (Object)campo.GetValue(comportamento);
+
+                if (valor == null)
+                    continue;
+
+                Assert.AreNotSame(
+                    prompt,
+                    valor,
+                    $"'{comportamento.GetType().Name}.{campo.Name}' também " +
+                    "aponta ao prompt de interacção: são dois donos, e foi " +
+                    "assim que o prompt piscava com o texto velho."
+                );
+            }
+        }
+    }
+
     private static T ProcurarNaCena<T>() where T : Object
     {
         T[] achados = Object.FindObjectsByType<T>(
