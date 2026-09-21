@@ -27,10 +27,12 @@ audio, no save, no era system. `bundleVersion 0.1.0`, `companyName: DefaultCompa
 Docs, comments, `Debug.Log` strings and UI text are in **pt-PT**. Match that when editing. Commits
 in pt-PT too.
 
-**This directory is not a git repository** and has no `.gitignore`. If one is initialised, ignore
-`Library/`, `Temp/`, `Logs/`, `UserSettings/`, `*.csproj`, `*.slnx` — everything else under
-`Assets/`, `Packages/` and `ProjectSettings/` is source, **including every `.meta` file**. A `.cs`
-committed without its `.meta` loses its GUID and every scene reference to it breaks.
+**This is a git repository** (`github.com/Goncalves1307/PineHollow`, branch `main`, commits go
+straight to `main`) with a 119-line `.gitignore` covering `Library/`, `Temp/`, `Logs/`,
+`UserSettings/`, `*.csproj` and `*.slnx`. Everything else under `Assets/`, `Packages/` and
+`ProjectSettings/` is source, **including every `.meta` file**. A `.cs` committed without its
+`.meta` loses its GUID and every scene reference to it breaks — and a folder moved without its
+`.meta` gets a fresh GUID, which breaks the same way.
 
 ## The design documents
 
@@ -53,22 +55,16 @@ Verified 2026-09-21 against the working tree. **When they conflict, the code is 
 
 **The plan says we are at "Stage 2 — Player / próximo passo Stage 2.3 — Interação básica". We are
 well past that.** Fases 2.3, 3 and 4 are entirely unchecked in the plan and entirely implemented in
-`Assets/Scripts/`: camera raycast, `IInteractable`, interaction key, contextual prompt text, pick
+`Assets/_Project/Scripts/`: camera raycast, `IInteractable`, interaction key, contextual prompt text, pick
 up, inspection mode, rotation, zoom, exit. Fase 5 (photography) is unchecked and *partially*
 implemented — see the caveat below. Do not re-implement a system because its box is empty; grep
-`Assets/Scripts/` first.
+`Assets/_Project/Scripts/` first.
 
-**The folder structure in the docs was never adopted.** Both the GDD (§28) and the plan (Fase 1)
-mandate `Assets/_Project/{Art,Audio,Materials,Models,Prefabs,Scenes,Scripts,Settings,UI}` plus
-`Environment/` and `ThirdParty/`. What exists is those folders **flat under `Assets/`, all empty**
-except `Prefabs/` (1 file), `Scenes/` (1 file) and `Scripts/`. There is no `_Project/`, no
-`Environment/`, no `ThirdParty/`. The plan checks "Estrutura de pastas" as done; it is not.
-Decide once whether to adopt `_Project/` or to bless the flat layout, then make the docs match —
-do not quietly write to a third layout.
-
-**`Bootstrap.unity` does not exist.** The plan checks "Cenas Bootstrap e Prototype_Player" as done.
-`Prototype_Player.unity` exists but sits at `Assets/` root, not in `Assets/Scenes/`; there is no
-Bootstrap scene anywhere.
+**The folder structure the docs mandate is now the one on disk** (FASE 1, 2026-09-21).
+`Assets/_Project/{Art,Audio,Materials,Models,Photography,Prefabs,Scenes,Scripts,Settings,UI}` plus
+`Assets/Environment/` and `Assets/ThirdParty/` (which holds TextMesh Pro). The empty folders carry
+a `.gitkeep`, because git does not store empty directories and without it they simply did not
+appear in a fresh clone. Write new assets into `_Project/`; do not start a third layout.
 
 **The photography that exists is not the photography the GDD describes.** `PhotographySystem` is an
 *in-game camera*: it renders the view to a 256×256 RenderTexture and appends a bare `Texture2D` to
@@ -109,49 +105,63 @@ grep -nE "error CS|warning CS" Logs/Editor.log | tail -20
 
 `Logs/Editor.log` is append-only across sessions and currently ~10MB — always `tail`, never `cat`.
 
-**There are no tests.** `com.unity.test-framework` 1.8.0 is installed, but there are zero test
-files and **zero `.asmdef` files in the whole project** — all game code compiles into the default
-`Assembly-CSharp`. Adding a first test means adding `Assets/Tests/` with its own asmdef referencing
-`UnityEngine.TestRunner`; there is no existing pattern to copy. Until then, verification is manual:
-enter play mode in `Assets/Prototype_Player.unity` and exercise the keys listed below.
+**There are no unit tests.** `com.unity.test-framework` 1.8.0 is installed, but there are zero
+test files and **zero `.asmdef` files in the whole project** — all game code compiles into the
+default `Assembly-CSharp`. Adding a first test means adding `Assets/Tests/` with its own asmdef
+referencing `UnityEngine.TestRunner`; there is no existing pattern to copy.
+
+What does exist is a settings validator, `Assets/_Project/Scripts/Editor/Fase1Validacao.cs`. It
+asserts the FASE 1 foundation — layers, collision matrix, folders, build settings, quality levels,
+shadow distance, camera tags, culling masks and post-processing — and exits non-zero in batchmode:
+
+```bash
+/home/diogo/dados/Unity/6000.6.2f1/Editor/Unity \
+  -batchmode -nographics -quit -projectPath /home/diogo/dados/Unity/PineHollow \
+  -executeMethod Fase1Validacao.Correr -logFile -
+```
+
+It checks configuration, not behaviour. Gameplay verification is still manual: enter play mode in
+`Assets/_Project/Scenes/Prototype_Player.unity` and exercise the keys listed below.
 
 ## The scenes
 
-There are two, and **the one in the build settings is not the one being worked on**:
+There are two, both in the build settings, in this order:
 
-- `Assets/Prototype_Player.unity` (70K) — the real scene. Player, door, inspectable object, the
-  whole photography UI. **Not listed in `ProjectSettings/EditorBuildSettings.asset`.**
-- `Assets/Scenes/SampleScene.unity` (11K) — the untouched URP template scene (Main Camera,
-  Directional Light, Global Volume). **This is the only enabled scene in the build settings**, so a
-  build today ships an empty room. Fix the build list before anyone tries to ship a player.
+- `Assets/_Project/Scenes/Bootstrap.unity` — first in the build list. Holds `BootstrapLoader`,
+  which `DontDestroyOnLoad`s itself and loads the game scene by name. This is where anything that
+  must survive a scene change belongs — the era switch of Fase 7 swaps scenes underneath it.
+- `Assets/_Project/Scenes/Prototype_Player.unity` — the real scene. Player, door, inspectable
+  object, the whole photography UI, and a global `Volume` with `PineHollowVolumeProfile`.
 
-`Assets/Readme.asset` and `Assets/TutorialInfo/` are URP template leftovers, also untouched.
+The URP template leftovers (`SampleScene.unity`, `Readme.asset`, `TutorialInfo/`) were deleted in
+FASE 1.
 
 ## Architecture
 
-Eleven scripts in `Assets/Scripts/`, flat, one `MonoBehaviour` per file, no namespaces. All of them
+Twelve scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no
+namespaces (plus an editor-only validator under `Editor/`). All of them
 hang off the `Player` GameObject or off the object they act on. Three clusters:
 
-**Interaction** — [`IInteractable`](Assets/Scripts/IInteractable.cs) is the whole contract:
-`Interact()` + `GetInteractionText()`. [`InteractionSystem`](Assets/Scripts/InteractionSystem.cs)
+**Interaction** — [`IInteractable`](Assets/_Project/Scripts/IInteractable.cs) is the whole contract:
+`Interact()` + `GetInteractionText()`. [`InteractionSystem`](Assets/_Project/Scripts/InteractionSystem.cs)
 raycasts 3m from the player camera every frame, `GetComponent<IInteractable>()` on the hit, and
 drives the `[E] <text>` prompt. Implementors: `DoorInteractable` (slerps a pivot 90°),
 `InspectionInteractable` (hands the object to `InspectionSystem`), `TestInteractable` (a debug stub
 — safe to delete once something real replaces it).
 
-**Inspection** — [`InspectionSystem`](Assets/Scripts/InspectionSystem.cs) reparents the target to
+**Inspection** — [`InspectionSystem`](Assets/_Project/Scripts/InspectionSystem.cs) reparents the target to
 the camera transform, caches `position`/`rotation`/`parent`, locks the player, and restores on
 `Esc`. `InteractionSystem.Update` early-returns while `IsInspecting`, so it is the one place where
 a system explicitly defers to another. This is the system the GDD's photo inspection (rotate, flip,
 zoom, read the back) should grow out of.
 
-**Photography** — [`PhotographySystem`](Assets/Scripts/PhotographySystem.cs) is the state machine
+**Photography** — [`PhotographySystem`](Assets/_Project/Scripts/PhotographySystem.cs) is the state machine
 (`F` enters photo mode, LMB captures, `Esc` backs out one level). Capture copies the player
 camera's transform+FOV onto `photoCaptureCamera`, calls `Render()` into
-`Assets/Photography/PhotoRenderTexture.renderTexture`, and `ReadPixels` into a new `Texture2D`.
-[`PhotoAlbumSystem`](Assets/Scripts/PhotoAlbumSystem.cs) rebuilds a thumbnail grid from that list;
-[`PhotoThumbnail`](Assets/Scripts/PhotoThumbnail.cs) is an `IPointerClickHandler` that opens
-[`PhotoViewerSystem`](Assets/Scripts/PhotoViewerSystem.cs).
+`Assets/_Project/Photography/PhotoRenderTexture.renderTexture`, and `ReadPixels` into a new `Texture2D`.
+[`PhotoAlbumSystem`](Assets/_Project/Scripts/PhotoAlbumSystem.cs) rebuilds a thumbnail grid from that list;
+[`PhotoThumbnail`](Assets/_Project/Scripts/PhotoThumbnail.cs) is an `IPointerClickHandler` that opens
+[`PhotoViewerSystem`](Assets/_Project/Scripts/PhotoViewerSystem.cs).
 
 ## Input
 
@@ -160,7 +170,7 @@ camera's transform+FOV onto `photoCaptureCamera`, calls `Render()` into
 throws `InvalidOperationException` at runtime — it will compile fine and die in play mode. Use
 `Keyboard.current` / `Mouse.current`, and keep the `!= null` guard every existing call site has.
 
-**`Assets/InputSystem_Actions.inputactions` is wired as the project-wide actions asset**
+**`Assets/_Project/Settings/InputSystem_Actions.inputactions` is wired as the project-wide actions asset**
 (`com.unity.input.settings.actions` in `EditorBuildSettings.asset`) **but nothing reads it.** There
 is no `PlayerInput` component in the scene and no generated C# wrapper — every script polls devices
 directly. Do not assume a rebind there changes anything; either migrate the polling to actions, or
@@ -169,17 +179,47 @@ treat the asset as dead weight.
 Current bindings, spread across four scripts: `WASD` + `LShift` move, mouse look, `E` interact,
 `F` photo mode, `Tab` album (see below), LMB shutter / thumbnail click, `Esc` back out.
 
+## Layers and tags
+
+Created in FASE 1; before that the project had **zero** custom layers and `tags: []`.
+
+| Layer | For |
+|---|---|
+| 8 `Interactable` | anything the interaction raycast should hit — `Door`, `InspectionObject` |
+| 9 `Player` | the player capsule, so the raycast can exclude the player's own colliders |
+| 10 `PhotoOnly` | rendered by the capture camera only; the player camera does not see it |
+| 11 `IgnorePhoto` | rendered by the player camera only — `CameraBody`, the held device, lives here so it does not appear in its own photograph |
+
+`UI` (5) and `PhotoOnly` (10) are out of the collision matrix entirely: they are rendering
+categories, not physics ones.
+
+**There are still no custom tags, and that is deliberate** — nothing in the codebase reads one
+(`CompareTag`, `FindWithTag`: zero hits). The player camera carries the built-in `MainCamera` tag,
+which was missing and made `Camera.main` return `null`. Don't add tags speculatively; add a layer
+or a `[SerializeField]` reference instead.
+
 ## Things that will bite you
 
-**The album is unreachable.** `PhotoAlbumSystem.OpenAlbum()` ([PhotoAlbumSystem.cs:18](Assets/Scripts/PhotoAlbumSystem.cs#L18))
+**The interaction raycast still has no layer mask.**
+[`InteractionSystem.CheckForInteractable()`](Assets/_Project/Scripts/InteractionSystem.cs#L41)
+calls the three-argument `Physics.Raycast` overload — no `layerMask`, no `QueryTriggerInteraction`
+— so it falls back to `UseGlobal` and `DynamicsManager.m_QueriesHitTriggers: 1` makes it hit
+triggers. Today nothing reproduces it (the scene has no trigger volume and three colliders), but
+from Fase 10 on the first trigger volume in front of the camera steals focus from the object
+behind it. FASE 1 created the layers this needs; wiring the mask is `869f4yb37`, in Fase 3. Note
+the global flag stays at `1` on purpose — pass `QueryTriggerInteraction.Ignore` at the call site
+rather than changing behaviour for every query in the project.
+
+
+**The album is unreachable.** `PhotoAlbumSystem.OpenAlbum()` ([PhotoAlbumSystem.cs:18](Assets/_Project/Scripts/PhotoAlbumSystem.cs#L18))
 has **no caller anywhere** — not in code, not as a UnityEvent in the scene or prefab.
-`Tab` calls [`PhotographySystem.TogglePhotoAlbum()`](Assets/Scripts/PhotographySystem.cs#L226),
+`Tab` calls [`PhotographySystem.TogglePhotoAlbum()`](Assets/_Project/Scripts/PhotographySystem.cs#L226),
 which only contains the *already-open* branch and returns without doing anything when the album is
 closed. So `Tab` is a no-op and the whole album/viewer path is dead in play mode. Anything you
 "fix" downstream of it is unverifiable until this is wired.
 
 **Nobody owns the cursor, and `PlayerController` wins.**
-[`PlayerController.HandleCursor()`](Assets/Scripts/PlayerController.cs#L109) runs **unconditionally**
+[`PlayerController.HandleCursor()`](Assets/_Project/Scripts/PlayerController.cs#L109) runs **unconditionally**
 every frame — it is outside both the `IsMovementLocked` and `IsLookLocked` guards. It relocks and
 hides the cursor on *any* left-click while the cursor is free. `PhotoAlbumSystem.OpenAlbum()` and
 `PhotoViewerSystem.Open()` both free the cursor to let you click a thumbnail; the first such click
@@ -194,21 +234,21 @@ no ordering guarantee between MonoBehaviours, so one keypress can collapse two U
 A new `Esc` handler makes this worse — route through the existing state machine instead.
 
 **`PhotoViewerSystem.Close()` leaves the cursor free** (`CursorLockMode.None`, visible — same as
-`Open()`, [PhotoViewerSystem.cs:47](Assets/Scripts/PhotoViewerSystem.cs#L47)). Closing the viewer
+`Open()`, [PhotoViewerSystem.cs:47](Assets/_Project/Scripts/PhotoViewerSystem.cs#L47)). Closing the viewer
 does not hand control back to the player.
 
 **Photos are 256×256 and live only in RAM.** The render texture is 256×256, and `capturedPhotos`
-([PhotographySystem.cs:31](Assets/Scripts/PhotographySystem.cs#L31)) is a plain `List<Texture2D>`
+([PhotographySystem.cs:31](Assets/_Project/Scripts/PhotographySystem.cs#L31)) is a plain `List<Texture2D>`
 that is never trimmed and whose textures are never `Destroy`ed — every shot leaks a texture, and a
 scene reload loses the lot. Nothing writes to disk, which also means Fase 21 (save system,
 "fotografias descobertas") has nothing to persist yet.
 
 **`InspectionSystem.inspectionDistance` is a `[SerializeField]` that is overwritten at runtime.**
-`Inspect()` resets it to a hard-coded `1.5f` ([InspectionSystem.cs:32](Assets/Scripts/InspectionSystem.cs#L32))
+`Inspect()` resets it to a hard-coded `1.5f` ([InspectionSystem.cs:32](Assets/_Project/Scripts/InspectionSystem.cs#L32))
 before using it, so whatever you set in the inspector is ignored. It doubles as the live zoom
 state, which is why. Do not "fix" the inspector value — change the literal, or split the two roles.
 
-**The scene says `NewMonoBehaviourScript`, and that is fine.** `Assets/Prototype_Player.unity:681`
+**The scene says `NewMonoBehaviourScript`, and that is fine.** `Assets/_Project/Scenes/Prototype_Player.unity:681`
 carries `m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript`, but the `m_Script` GUID
 is `InteractionSystem.cs`'s and the serialised fields are `InteractionSystem`'s. It is a stale
 string left from renaming the file; Unity binds by GUID. Harmless — do not hand-edit the YAML to
@@ -269,6 +309,6 @@ type. Name the underground room `Chamber` and the device `PhotoCamera`/`CameraDe
 - Interaction prompt text is the verb only — `GetInteractionText()` returns "Abrir", "Fechar",
   "Examinar", "Interagir"; `InteractionSystem` prepends `[E] `. Keep the verb in the interactable.
 - No coroutines, no `async`, no events — everything is polled in `Update`. C# 9, netstandard2.1.
-- Formatting in `Assets/Scripts/` is inconsistent: `PhotographySystem.Update`,
+- Formatting in `Assets/_Project/Scripts/` is inconsistent: `PhotographySystem.Update`,
   `PlayerController.Update` and `PhotoAlbumSystem.CloseAlbum` are indented at column 0 inside their
   class. Match the surrounding file rather than reformatting a whole file inside a feature change.

@@ -100,12 +100,17 @@ A prioridade será sempre ter uma versão jogável antes de aumentar a escala.
 - [x] URP
 - [x] Input System
 - [x] TextMeshPro
-- [ ] Definições gráficas
-- [ ] Qualidade
-- [ ] Layers
-- [ ] Tags
-- [ ] Physics settings
-- [ ] Cenas de produção
+- [x] Definições gráficas — pós-processamento ligado, perfil global limpo do que deforma a imagem
+- [x] Qualidade — um só nível (PC); o `Mobile` saiu com Android e iOS
+- [x] Layers — `Interactable`, `Player`, `PhotoOnly`, `IgnorePhoto`
+- [x] Tags — só a built-in `MainCamera`; nenhum script lê tags personalizadas
+- [x] Physics settings — matriz de colisão revista; `m_QueriesHitTriggers` fica a `1` de propósito
+- [x] Cenas de produção — `Bootstrap.unity` criada e a arrancar a build
+- [x] Estrutura de pastas — `_Project/` adoptado, com `.gitkeep` nas vazias
+
+> Fechada a 2026-09-21. A distância de sombras (80 m) é **derivada, não medida** — a primeira
+> medição em play mode manda sobre ela. MSAA e VSync ficaram por decidir pela mesma razão.
+> A layer mask do raycast de interação **não** é desta fase: é a `869f4yb37`, na FASE 3.
 
 Estrutura:
 

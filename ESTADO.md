@@ -1,8 +1,10 @@
 # Pine Hollow — Estado do desenvolvimento
 
 > Auditoria das 27 fases do `Pine_Hollow_Plano_Completo_Desenvolvimento.md` contra o código real.
-> **Última verificação: 2026-09-21**, contra a árvore de trabalho (`Assets/Scripts/`,
-> `Assets/Prototype_Player.unity`, `ProjectSettings/`).
+> **Última verificação: 2026-09-21**, contra a árvore de trabalho
+> (`Assets/_Project/Scripts/`, `Assets/_Project/Scenes/Prototype_Player.unity`,
+> `ProjectSettings/`). A FASE 1 fechou nesse dia e os caminhos mudaram: tudo vive em
+> `Assets/_Project/` agora.
 >
 > Este ficheiro existe porque **as checkboxes do plano estão desactualizadas** e um agente (ou uma
 > pessoa) que confie nelas reimplementa sistemas que já existem. Quando isto e o plano
@@ -27,7 +29,8 @@ Dos **12 milestones** do plano: **3 fechados, o 4.º a meio, 8 por abrir.**
 | 11 | Conteúdo narrativo completo | ❌ |
 | 12 | Polimento e lançamento | ❌ |
 
-Código total: **11 scripts, ~840 linhas**, uma cena jogável.
+Código total: **12 scripts, ~890 linhas**, duas cenas (`Bootstrap` e `Prototype_Player`),
+mais um validador de editor.
 
 ---
 
@@ -60,31 +63,45 @@ municipal…). Só no GDD: **torre meteorológica**. Só no plano: **Casas**, **
 ⚠️ **Os limites técnicos foram derivados, não medidos.** Nada foi corrido em play mode. A primeira
 medição real com arte na cena manda sobre os números de `Producao.md` §1.4.
 
-### FASE 1 — Fundação técnica · ~40%
+### FASE 1 — Fundação técnica · ✅ fechada (2026-09-21)
 
 | Item | Estado | Nota |
 |---|---|---|
 | Unity 6 / URP / Input System / TextMeshPro | ✅ | `6000.6.2f1`, URP 17.6, Input System 1.20 |
-| Definições gráficas / Qualidade | ❌ | Dois níveis do template (`PC`, `Mobile`) por afinar. O `Mobile` não serve este jogo |
-| **Layers** | ❌ | `TagManager.asset`: **zero layers personalizadas** |
-| **Tags** | ❌ | `tags: []` |
-| **Physics settings** | ❌ | Tudo nas predefinições, matriz de colisão cheia |
-| Cenas de produção | ❌ | Não há `Bootstrap.unity` |
-| ~~Estrutura de pastas~~ | ⚠️ | **O plano marca como feita e não está** — ver abaixo |
+| Definições gráficas | ✅ | Pós-processamento ligado nas duas câmaras; `Volume` global na cena |
+| Qualidade | ✅ | Um só nível (`PC`); o `Mobile` saiu com Android e iOS |
+| **Layers** | ✅ | 8 `Interactable`, 9 `Player`, 10 `PhotoOnly`, 11 `IgnorePhoto` |
+| **Tags** | ✅ | Nenhuma personalizada — nada no código lê tags. Faltava a built-in `MainCamera`, e essa foi posta |
+| **Physics settings** | ✅ | Matriz de colisão revista: `UI` e `PhotoOnly` fora da física |
+| Cenas de produção | ✅ | `Bootstrap.unity` criada, primeira na build; `Prototype_Player` a seguir |
+| Estrutura de pastas | ✅ | `_Project/` adoptado, `.gitkeep` nas vazias |
 
-🔴 **Layers e physics não são cosmética.** `InteractionSystem.CheckForInteractable()` faz
-`Physics.Raycast` **sem layer mask**, e o projecto tem `m_QueriesHitTriggers: 1`. Qualquer trigger
-volume que entre na casa passa a roubar o foco ao objecto que está atrás dele. Isto tem de ser
-resolvido antes da Fase 10 (casa), não depois.
+**Verificação:** `Assets/_Project/Scripts/Editor/Fase1Validacao.cs` corre em batchmode com
+`-executeMethod Fase1Validacao.Correr` e sai a 0. Cobre configuração, não comportamento.
 
-⚠️ **A estrutura de pastas documentada nunca foi adoptada.** GDD §28 e Fase 1 mandam
-`Assets/_Project/{Art,Audio,Materials,Models,Prefabs,Scenes,Scripts,Settings,UI}` + `Environment/`
-+ `ThirdParty/`. O que existe são essas pastas **planas em `Assets/`, todas vazias** excepto
-`Prefabs/` (1), `Scenes/` (1) e `Scripts/`. Não há `_Project/`, `Environment/` nem `ThirdParty/`.
-Decidir uma vez qual das duas vale e alinhar os documentos.
+🔴 **O raycast de interação continua sem layer mask — e é de propósito.**
+`InteractionSystem.CheckForInteractable()` (`InteractionSystem.cs:48-52`) usa o overload de três
+argumentos, sem `layerMask` e sem `QueryTriggerInteraction`, e o projecto mantém
+`m_QueriesHitTriggers: 1`. A FASE 1 entregou as layers de que a correcção precisa; a correcção em
+si é a `869f4yb37`, na FASE 3. **Continua a ter de estar resolvida antes da Fase 10 (casa).**
+O flag global fica a `1` por escolha: mudá-lo alterava o comportamento de todos os queries do
+projecto, incluindo os que ainda não existem. A alternativa é passar
+`QueryTriggerInteraction.Ignore` na chamada.
 
-⚠️ **`Bootstrap.unity` não existe** e o plano marca «Cenas Bootstrap e Prototype_Player» como
-feito. O `Prototype_Player.unity` está na raiz de `Assets/`, não em `Assets/Scenes/`.
+⚠️ **A distância de sombras (80 m) é derivada, não medida.** Sai de `Producao.md` §1.9, pelos
+3 km² do mapa. Nada correu em play mode com conteúdo a sério. A primeira medição real manda.
+Pela mesma razão ficaram por decidir **MSAA vs anti-aliasing de pós-processo** e o **VSync**: são
+itens de §1.9 que só se fecham com número medido.
+
+⚠️ **O `DefaultVolumeProfile` era um perfil de teste da Unity.** Traz componentes internos
+(`CopyPasteTestComponent1/2/3`, `TestVolume`, `TestAnimationCurveVolumeComponent`,
+`VolumeComponentSupportedEverywhere`) que não têm nada que fazer num perfil de projecto. Os quatro
+efeitos que a direcção artística proíbe — aberração cromática, distorção de lente, Panini e motion
+blur — **foram removidos**, porque ligar o pós-processamento tornava-os vivos. Os componentes de
+teste ficaram: limpá-los é arrumação, não risco.
+
+⚠️ **Nada disto foi visto em play mode.** A verificação é de ficheiros e de API, pelo validador em
+batchmode. O pós-processamento mudou o que se vê e **ninguém abriu o ecrã**.
 
 ### FASE 2 — Player · ~60%
 
