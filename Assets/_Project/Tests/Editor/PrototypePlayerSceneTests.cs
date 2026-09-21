@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 // A cena foi montada com o editor fechado, editando o YAML à mão. Estes testes
@@ -332,6 +333,72 @@ public class PrototypePlayerSceneTests
                     "assim que o prompt piscava com o texto velho."
                 );
             }
+        }
+    }
+
+    // O realce da FASE 3 vive na mira. Se ela não estiver na cena e ligada,
+    // não há realce nenhum — e isso não dá erro, só silêncio.
+    [Test]
+    public void AMiraExisteNaCenaEEstaLigadaAoFoco()
+    {
+        CrosshairSystem mira = ProcurarNaCena<CrosshairSystem>();
+
+        Assert.IsNotNull(
+            mira,
+            "A cena não tem CrosshairSystem: o objecto focado não tem realce."
+        );
+
+        foreach (string campo in
+            new[] { "crosshair", "interactionSystem", "stateMachine" })
+        {
+            Object valor = (Object)typeof(CrosshairSystem)
+                .GetField(campo, BindingFlags.NonPublic | BindingFlags.Instance)
+                .GetValue(mira);
+
+            Assert.IsNotNull(
+                valor,
+                $"CrosshairSystem.{campo} está por ligar."
+            );
+        }
+
+        Graphic[] tracos = (Graphic[])typeof(CrosshairSystem)
+            .GetField("strokes", BindingFlags.NonPublic | BindingFlags.Instance)
+            .GetValue(mira);
+
+        Assert.IsNotNull(tracos);
+        Assert.Greater(
+            tracos.Length,
+            0,
+            "A mira não tem traços: não há o que acender."
+        );
+
+        foreach (Graphic traco in tracos)
+        {
+            Assert.IsNotNull(traco, "Um traço da mira está por ligar.");
+        }
+    }
+
+    // A regra da direcção artística: o realce é interface, nunca luz no mundo.
+    // Se alguém puser luz num interactable, isto apanha-o — e a razão não é
+    // estética: luz no objecto focado sabota o alinhamento de fotografias.
+    [Test]
+    public void NenhumInteractableDaCenaTemLuzPropria()
+    {
+        foreach (MonoBehaviour comportamento in ComportamentosDoProjecto())
+        {
+            if (!(comportamento is IInteractable))
+                continue;
+
+            Light[] luzes =
+                comportamento.GetComponentsInChildren<Light>(true);
+
+            Assert.AreEqual(
+                0,
+                luzes.Length,
+                $"'{comportamento.name}' tem Light própria. O realce é a mira, " +
+                "não o objecto: «sempre matéria, nunca luz» (Direcção " +
+                "Artística §7.2), e luz no objecto focado sabota o alinhamento."
+            );
         }
     }
 
