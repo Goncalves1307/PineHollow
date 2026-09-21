@@ -215,4 +215,60 @@ public class PrototypePlayerSceneTests
             yield return comportamento;
         }
     }
+
+    // Os passos estiveram mudos porque não havia um único ficheiro de áudio no
+    // projecto. Agora há — e isto falha se alguém os desligar outra vez.
+    [Test]
+    public void OsPassosTemSom()
+    {
+        FootstepSystem passos = ProcurarNaCena<FootstepSystem>();
+
+        Assert.IsNotNull(passos, "Não há FootstepSystem na cena.");
+
+        SerializedObject so = new SerializedObject(passos);
+        SerializedProperty clips = so.FindProperty("defaultFootstepClips");
+
+        Assert.IsNotNull(clips, "O campo defaultFootstepClips desapareceu.");
+
+        Assert.Greater(
+            clips.arraySize,
+            0,
+            "Sem clips por omissão os passos voltam a ser mudos."
+        );
+
+        for (int i = 0; i < clips.arraySize; i++)
+        {
+            Assert.IsNotNull(
+                clips.GetArrayElementAtIndex(i).objectReferenceValue,
+                $"defaultFootstepClips[{i}] está vazio."
+            );
+        }
+    }
+
+    // O som por superfície só se prova se houver ao menos uma superfície a
+    // sobrepor-se aos clips por omissão.
+    [Test]
+    public void HaPeloMenosUmaSuperficieComSomProprio()
+    {
+        SurfaceAudio[] superficies = Object.FindObjectsByType<SurfaceAudio>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None
+        );
+
+        Assert.Greater(
+            superficies.Length,
+            0,
+            "Nenhum objecto da cena tem SurfaceAudio: o caminho do som por " +
+            "superfície nunca chega a correr em play mode."
+        );
+
+        foreach (SurfaceAudio superficie in superficies)
+        {
+            Assert.IsTrue(
+                superficie.HasClips,
+                $"O SurfaceAudio de '{superficie.name}' não tem clips — pisá-lo " +
+                "cai nos clips por omissão sem ninguém dar por isso."
+            );
+        }
+    }
 }

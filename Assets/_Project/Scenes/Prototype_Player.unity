@@ -729,6 +729,26 @@ MonoBehaviour:
   photoImage: {fileID: 51884766}
   photoAlbumSystem: {fileID: 165309926}
   photoAlbum: {fileID: 165309922}
+--- !u!114 &2100439085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100439080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6cbc56bd64f4aeba2a8ae0fad183cd1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SurfaceAudio
+  footstepClips:
+  - {fileID: 8300000, guid: c21b344293c5430ebca26e3895148888, type: 3}
+  - {fileID: 8300000, guid: 1e10cd7b3dbd4dcda184dae3173e7fd7, type: 3}
+  - {fileID: 8300000, guid: e0a262183d444c07b481343d06773374, type: 3}
+  - {fileID: 8300000, guid: c3cf3d8d8fc541898539e5c2877fabe1, type: 3}
+  - {fileID: 8300000, guid: 18ae1873ef1e462c9e968d00388afefd, type: 3}
+  - {fileID: 8300000, guid: 6b8fa4fd1944461cbacb5ae302cf6862, type: 3}
+  volumeScale: 1
 --- !u!114 &315431424
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -756,7 +776,10 @@ MonoBehaviour:
   characterController: {fileID: 315431418}
   footstepSource: {fileID: 0}
   stateMachine: {fileID: 315431424}
-  defaultFootstepClips: []
+  defaultFootstepClips:
+  - {fileID: 8300000, guid: c948c976d3594b3a9fbaf047c87c0ea9, type: 3}
+  - {fileID: 8300000, guid: 9d67a523cbf4435196f9e108e23f4b81, type: 3}
+  - {fileID: 8300000, guid: 3c990a53ad9f46b28004503649b0dd16, type: 3}
 --- !u!1 &512806841
 GameObject:
   m_ObjectHideFlags: 0
@@ -2443,6 +2466,7 @@ GameObject:
   - component: {fileID: 2100439083}
   - component: {fileID: 2100439082}
   - component: {fileID: 2100439081}
+  - component: {fileID: 2100439085}
   m_Layer: 0
   m_Name: Ground
   m_TagString: Untagged
