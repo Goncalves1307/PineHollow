@@ -1,4 +1,7 @@
+using System.Text;
+using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class PhotoViewerSystem : MonoBehaviour
@@ -7,10 +10,20 @@ public class PhotoViewerSystem : MonoBehaviour
     [SerializeField] private GameObject photoViewer;
     [SerializeField] private RawImage photoImage;
 
+    [Header("Frente e verso")]
+    // A legenda é a frente: data, local e quem lá está. O verso é o que
+    // alguém escreveu à mão nas costas — canon, citado à letra.
+    [SerializeField] private TMP_Text legenda;
+    [SerializeField] private TMP_Text versoTexto;
+
     [Header("State")]
     [SerializeField] private PlayerStateMachine stateMachine;
 
     public bool IsOpen => photoViewer != null && photoViewer.activeSelf;
+
+    public PhotoData Fotografia { get; private set; }
+
+    public bool AMostrarVerso { get; private set; }
 
     private void Start()
     {
@@ -35,6 +48,18 @@ public class PhotoViewerSystem : MonoBehaviour
         if (!IsOpen)
             return;
 
+        // Virar só responde a quem está no topo. Sem isto, a comparação
+        // aberta por cima deixava o Q a virar a fotografia por trás dela.
+        if (stateMachine != null &&
+            stateMachine.IsTopMode(PlayerState.ViewingPhoto))
+        {
+            if (Keyboard.current != null &&
+                Keyboard.current.qKey.wasPressedThisFrame)
+            {
+                Virar();
+            }
+        }
+
         if (stateMachine != null &&
             stateMachine.ConsumeBack(PlayerState.ViewingPhoto))
         {
@@ -42,12 +67,18 @@ public class PhotoViewerSystem : MonoBehaviour
         }
     }
 
-    public void Open(Texture2D photo)
+    public void Open(PhotoData fotografia)
     {
-        if (photo == null)
+        if (fotografia == null)
             return;
 
-        photoImage.texture = photo;
+        Fotografia = fotografia;
+
+        // Abre-se sempre pela frente. Uma fotografia aberta de costas por ter
+        // ficado assim da vez anterior é uma surpresa sem motivo.
+        AMostrarVerso = false;
+
+        Desenhar();
 
         photoViewer.SetActive(true);
 
@@ -55,12 +86,82 @@ public class PhotoViewerSystem : MonoBehaviour
             stateMachine.PushMode(PlayerState.ViewingPhoto);
     }
 
+    // Uma fotografia sem nada escrito nas costas não se vira: não há segunda
+    // face, e virá-la mostrava um painel vazio.
+    public bool Virar()
+    {
+        if (Fotografia == null || !Fotografia.TemVerso)
+            return false;
+
+        AMostrarVerso = !AMostrarVerso;
+
+        Desenhar();
+
+        return true;
+    }
+
     public void Close()
     {
         photoViewer.SetActive(false);
 
+        Fotografia = null;
+        AMostrarVerso = false;
+
         // Fechar devolve o controlo: antes deixava o cursor solto.
         if (stateMachine != null)
             stateMachine.PopMode(PlayerState.ViewingPhoto);
+    }
+
+    private void Desenhar()
+    {
+        bool frente = !AMostrarVerso;
+
+        if (photoImage != null)
+        {
+            photoImage.texture = Fotografia != null ? Fotografia.Imagem : null;
+            photoImage.gameObject.SetActive(frente);
+        }
+
+        if (legenda != null)
+        {
+            legenda.text = Legendar(Fotografia);
+            legenda.gameObject.SetActive(frente);
+        }
+
+        if (versoTexto != null)
+        {
+            versoTexto.text = Fotografia != null ? Fotografia.Verso : string.Empty;
+            versoTexto.gameObject.SetActive(!frente);
+        }
+    }
+
+    // Data, local e quem lá está — os campos que a Texture2D não tinha e que
+    // são a razão de esta fase existir. O que estiver por preencher não deixa
+    // uma linha vazia nem um separador solto.
+    public static string Legendar(PhotoData fotografia)
+    {
+        if (fotografia == null)
+            return string.Empty;
+
+        StringBuilder texto = new StringBuilder();
+
+        Acrescentar(texto, fotografia.Data);
+        Acrescentar(texto, fotografia.Local);
+
+        if (fotografia.Personagens.Count > 0)
+            Acrescentar(texto, string.Join(", ", fotografia.Personagens));
+
+        return texto.ToString();
+    }
+
+    private static void Acrescentar(StringBuilder texto, string linha)
+    {
+        if (string.IsNullOrWhiteSpace(linha))
+            return;
+
+        if (texto.Length > 0)
+            texto.Append('\n');
+
+        texto.Append(linha);
     }
 }

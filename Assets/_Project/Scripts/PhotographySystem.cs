@@ -20,12 +20,22 @@ public class PhotographySystem : MonoBehaviour
     [SerializeField] private PhotoAlbumSystem photoAlbumSystem;
     [SerializeField] private GameObject photoAlbum;
 
+    [Header("Fotografias que começam no álbum")]
+    // Quem quiser abrir o jogo já com fotografias na mão põe-nas aqui. Serve
+    // o vertical slice, onde as fotografias são objectos que se encontram e
+    // não que se tiram, e serve para ver o álbum a funcionar sem depender da
+    // captura.
+    [SerializeField] private PhotoAsset[] fotografiasIniciais;
+
     public bool IsPhotographyMode { get; private set; }
 
-    public IReadOnlyList<Texture2D> CapturedPhotos => capturedPhotos;
+    // Deixou de ser List<Texture2D>: uma Texture2D não tem data, local,
+    // pessoas nem verso, e é sobre esses campos que a comparação e o
+    // alinhamento trabalham.
+    public IReadOnlyList<PhotoData> CapturedPhotos => capturedPhotos;
 
-    private readonly List<Texture2D> capturedPhotos =
-        new List<Texture2D>();
+    private readonly List<PhotoData> capturedPhotos =
+        new List<PhotoData>();
 
     private bool isPhotoPreviewOpen;
 
@@ -37,6 +47,66 @@ public class PhotographySystem : MonoBehaviour
 
         IsPhotographyMode = false;
         isPhotoPreviewOpen = false;
+
+        CarregarFotografiasIniciais();
+    }
+
+    private void CarregarFotografiasIniciais()
+    {
+        if (fotografiasIniciais == null)
+            return;
+
+        foreach (PhotoAsset asset in fotografiasIniciais)
+        {
+            if (asset != null)
+                AddPhoto(asset.Criar());
+        }
+    }
+
+    // A porta de entrada para fotografias que não vêm da captura: as que o
+    // jogador apanha do mundo (PhotoInteractable). Antes não havia nenhuma —
+    // a lista era privada e a propriedade só de leitura, e por isso «guardar
+    // no álbum ao apanhar» não era sequer exprimível.
+    public void AddPhoto(PhotoData fotografia)
+    {
+        if (fotografia == null)
+            return;
+
+        // A mesma fotografia apanhada duas vezes não são duas fotografias.
+        // Vale só para as autoradas: as capturas têm id próprio cada uma.
+        if (fotografia.Autorada && JaTem(fotografia.Id))
+            return;
+
+        capturedPhotos.Add(fotografia);
+    }
+
+    public bool JaTem(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            return false;
+
+        foreach (PhotoData fotografia in capturedPhotos)
+        {
+            if (fotografia.Id == id)
+                return true;
+        }
+
+        return false;
+    }
+
+    // As texturas das capturas são criadas à mão com `new Texture2D` e o Unity
+    // não as recolhe sozinho: cada disparo ficava a ocupar memória até fechar
+    // o jogo. As autoradas não se tocam — a imagem delas é um asset, e
+    // destruí-la estragava o asset para toda a sessão.
+    private void OnDestroy()
+    {
+        foreach (PhotoData fotografia in capturedPhotos)
+        {
+            if (fotografia != null && !fotografia.Autorada && fotografia.Imagem != null)
+                Destroy(fotografia.Imagem);
+        }
+
+        capturedPhotos.Clear();
     }
 
     private void Update()
@@ -158,7 +228,12 @@ public class PhotographySystem : MonoBehaviour
 
         Texture2D newPhoto = CreatePhotoTexture();
 
-        capturedPhotos.Add(newPhoto);
+        // A fotografia tirada pelo jogador é 2026 — é o presente do jogo. Não
+        // tem autor nem verso: é um registo do que ele viu, e o álbum
+        // distingue-a das que encontrou por isso mesmo.
+        capturedPhotos.Add(
+            PhotoData.DeCaptura(newPhoto, 2026, "Agora")
+        );
 
         photoImage.texture = newPhoto;
 
@@ -218,7 +293,11 @@ public class PhotographySystem : MonoBehaviour
             stateMachine.PopMode(PlayerState.PhotoPreview);
     }
 
-    private void TogglePhotoAlbum()
+    // Público para ser alcançável sem teclado. O Tab é lido no Update e o
+    // Keyboard.current é null em EditMode: com isto privado, o caminho que
+    // esteve morto desde que foi escrito continuava sem poder ser testado —
+    // e foi assim que ninguém deu por ele.
+    public void TogglePhotoAlbum()
     {
         if (photoAlbum.activeSelf)
         {
@@ -228,8 +307,29 @@ public class PhotographySystem : MonoBehaviour
             return;
         }
 
-        // Abrir o álbum é FASE 5 e está atrás do PhotoData: por isso o Tab
-        // ainda não abre nada. O que saiu daqui foi o segundo leitor do Esc —
-        // com o álbum aberto, quem o fecha é o PhotoAlbumSystem.
+        if (photoAlbumSystem == null)
+        {
+            Debug.LogError(
+                $"{name}: PhotoAlbumSystem por ligar no inspector — " +
+                "o Tab não abre o álbum.",
+                this
+            );
+
+            return;
+        }
+
+        // Só se abre com o player livre. O álbum solta o cursor, e abri-lo por
+        // cima de uma inspecção deixava o objecto na mão por trás do painel.
+        if (stateMachine != null && stateMachine.OpenModeCount > 0)
+            return;
+
+        // O painel primeiro, o OpenAlbum depois — e não ao contrário. O
+        // PhotoAlbumSystem vive dentro deste painel: com ele desligado o
+        // Update dele não corre, e o ViewingAlbum que o OpenAlbum empurra
+        // ficaria na pilha sem ninguém a consumir o Esc. O jogo só saía disso
+        // pela saída de emergência da PlayerStateMachine, com aviso no log.
+        photoAlbum.SetActive(true);
+
+        photoAlbumSystem.OpenAlbum();
     }
 }

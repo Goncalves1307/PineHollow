@@ -4,32 +4,47 @@ using UnityEngine.UI;
 
 public class PhotoThumbnail : MonoBehaviour, IPointerClickHandler
 {
-    private Texture2D photo;
+    private PhotoData photo;
     private PhotoViewerSystem photoViewerSystem;
+    private PhotoAlbumSystem photoAlbumSystem;
+
+    public PhotoData Photo => photo;
 
     public void Setup(
-        Texture2D photo,
-        PhotoViewerSystem photoViewerSystem)
+        PhotoData photo,
+        PhotoViewerSystem photoViewerSystem,
+        PhotoAlbumSystem photoAlbumSystem)
     {
         this.photo = photo;
         this.photoViewerSystem = photoViewerSystem;
+        this.photoAlbumSystem = photoAlbumSystem;
 
         RawImage rawImage = GetComponent<RawImage>();
 
         if (rawImage != null)
         {
-            rawImage.texture = photo;
+            rawImage.texture = photo != null ? photo.Imagem : null;
             rawImage.raycastTarget = true;
         }
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.Log("CLIQUE NA MINIATURA");
-
         if (photo == null)
         {
             Debug.LogError("A miniatura não tem fotografia.");
+            return;
+        }
+
+        // Direito marca para comparar, esquerdo abre. São gestos diferentes
+        // porque são intenções diferentes — e um botão «comparar» na UI
+        // obrigava a montar mais coisa na cena para o mesmo resultado.
+        if (eventData != null &&
+            eventData.button == PointerEventData.InputButton.Right)
+        {
+            if (photoAlbumSystem != null)
+                photoAlbumSystem.AlternarSeleccao(photo);
+
             return;
         }
 
@@ -38,8 +53,6 @@ public class PhotoThumbnail : MonoBehaviour, IPointerClickHandler
             Debug.LogError("PhotoViewerSystem está NULL.");
             return;
         }
-
-        Debug.Log("A abrir fotografia.");
 
         photoViewerSystem.Open(photo);
     }

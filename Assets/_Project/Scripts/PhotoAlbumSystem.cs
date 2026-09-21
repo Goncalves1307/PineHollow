@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PhotoAlbumSystem : MonoBehaviour
@@ -10,16 +11,28 @@ public class PhotoAlbumSystem : MonoBehaviour
     [Header("Photo Viewer")]
     [SerializeField] private PhotoViewerSystem photoViewerSystem;
 
+    [Header("Comparação")]
+    [SerializeField] private PhotoComparisonSystem photoComparisonSystem;
+
     [Header("State")]
     [SerializeField] private PlayerStateMachine stateMachine;
 
     public bool IsOpen { get; private set; }
+
+    // As que estão marcadas para comparar. No máximo duas — comparar é pôr
+    // uma fotografia por cima de outra, e três não é uma operação que o GDD
+    // descreva.
+    private readonly List<PhotoData> seleccionadas = new List<PhotoData>();
+
+    public IReadOnlyList<PhotoData> Seleccionadas => seleccionadas;
 
     private void Update()
     {
         if (!IsOpen)
             return;
 
+        // Com a comparação aberta por cima, o Esc é dela. Sem isto, um Esc
+        // fechava as duas camadas de uma vez.
         if (stateMachine != null &&
             stateMachine.ConsumeBack(PlayerState.ViewingAlbum))
         {
@@ -34,12 +47,16 @@ public class PhotoAlbumSystem : MonoBehaviour
         if (stateMachine != null)
             stateMachine.PushMode(PlayerState.ViewingAlbum);
 
+        seleccionadas.Clear();
+
         RefreshAlbum();
     }
 
     public void CloseAlbum()
     {
         IsOpen = false;
+
+        seleccionadas.Clear();
 
         if (stateMachine != null)
             stateMachine.PopMode(PlayerState.ViewingAlbum);
@@ -50,8 +67,8 @@ public class PhotoAlbumSystem : MonoBehaviour
         //
         // Este componente vive no próprio painel, por isso isto é a última
         // coisa do método: o estado já está todo consistente quando o Update
-        // deixar de correr. Quem abre tem de activar o painel primeiro — e
-        // abrir é FASE 5.
+        // deixar de correr. Quem abre activa o painel primeiro — é o que o
+        // PhotographySystem.TogglePhotoAlbum faz.
         gameObject.SetActive(false);
     }
 
@@ -59,13 +76,62 @@ public class PhotoAlbumSystem : MonoBehaviour
     {
         ClearAlbum();
 
-        foreach (Texture2D photo in photographySystem.CapturedPhotos)
+        if (photographySystem == null)
+        {
+            Debug.LogError(
+                $"{name}: PhotographySystem por ligar no inspector — " +
+                "o álbum abre vazio.",
+                this
+            );
+
+            return;
+        }
+
+        foreach (PhotoData photo in photographySystem.CapturedPhotos)
         {
             CreateThumbnail(photo);
         }
     }
 
-    private void CreateThumbnail(Texture2D photo)
+    // Clique direito numa miniatura marca-a para comparar. Ao marcar a
+    // segunda, a comparação abre — não há botão «comparar» na UI, e inventar
+    // um obrigava a montar mais coisa na cena para o mesmo resultado.
+    public void AlternarSeleccao(PhotoData fotografia)
+    {
+        if (fotografia == null)
+            return;
+
+        if (seleccionadas.Remove(fotografia))
+            return;
+
+        seleccionadas.Add(fotografia);
+
+        // A terceira empurra a mais antiga para fora, em vez de não fazer
+        // nada: quem clica numa terceira quer trocar, não ser ignorado.
+        if (seleccionadas.Count > 2)
+            seleccionadas.RemoveAt(0);
+
+        if (seleccionadas.Count == 2)
+            AbrirComparacao();
+    }
+
+    private void AbrirComparacao()
+    {
+        if (photoComparisonSystem == null)
+        {
+            Debug.LogError(
+                $"{name}: PhotoComparisonSystem por ligar no inspector — " +
+                "seleccionar duas fotografias não abre a comparação.",
+                this
+            );
+
+            return;
+        }
+
+        photoComparisonSystem.Abrir(seleccionadas[0], seleccionadas[1]);
+    }
+
+    private void CreateThumbnail(PhotoData photo)
     {
         GameObject thumbnail =
             Instantiate(photoThumbnailPrefab, photoList);
@@ -77,7 +143,8 @@ public class PhotoAlbumSystem : MonoBehaviour
         {
             photoThumbnail.Setup(
                 photo,
-                photoViewerSystem
+                photoViewerSystem,
+                this
             );
         }
         else
