@@ -292,7 +292,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 4294965215
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 8400000, guid: 9f18c329612435fdfacee17e372c0f26, type: 2}
   m_TargetDisplay: 0
@@ -601,7 +601,7 @@ GameObject:
   - component: {fileID: 315431421}
   - component: {fileID: 315431422}
   - component: {fileID: 315431423}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1470,7 +1470,7 @@ GameObject:
   - component: {fileID: 1363766763}
   - component: {fileID: 1363766762}
   - component: {fileID: 1363766761}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: CameraBody
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2022,7 +2022,7 @@ GameObject:
   - component: {fileID: 1955434905}
   m_Layer: 0
   m_Name: Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -2134,7 +2134,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 4294966271
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -2159,7 +2159,7 @@ GameObject:
   - component: {fileID: 2006574862}
   - component: {fileID: 2006574861}
   - component: {fileID: 2006574864}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2287,7 +2287,7 @@ GameObject:
   - component: {fileID: 2071690867}
   - component: {fileID: 2071690866}
   - component: {fileID: 2071690870}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: InspectionObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
