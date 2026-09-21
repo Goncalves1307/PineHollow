@@ -258,6 +258,11 @@ public class InspectionSystemTests
 
         maquina = host.AddComponent<PlayerStateMachine>();
 
+        // O AudioSource tem de existir aqui. Sem ele, `Tocar` saía na primeira
+        // cláusula e o teste dos clips nunca chegava ao código que diz testar —
+        // era verde com a guarda dos arrays apagada.
+        AudioSource fonte = host.AddComponent<AudioSource>();
+
         camara = Novo("Camara");
         camara.AddComponent<Camera>();
 
@@ -274,6 +279,7 @@ public class InspectionSystemTests
         Campo(sistema, "stateMachine").SetValue(sistema, maquina);
         Campo(sistema, "inspectionControls").SetValue(sistema, controlos);
         Campo(sistema, "descriptionText").SetValue(sistema, texto);
+        Campo(sistema, "inspectionSource").SetValue(sistema, fonte);
 
         return sistema;
     }

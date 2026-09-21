@@ -159,7 +159,7 @@ FASE 1.
 
 ## Architecture
 
-Twenty-two scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no
+Twenty-one scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no
 namespaces (plus an editor-only validator under `Editor/`, and `IInteractable`/`PlayerState`,
 which are not `MonoBehaviour`s). All of them hang off the `Player` GameObject or off the object
 they act on. Four clusters:

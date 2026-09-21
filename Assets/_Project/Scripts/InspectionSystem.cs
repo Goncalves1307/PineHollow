@@ -214,12 +214,16 @@ public class InspectionSystem : MonoBehaviour
 
         inspectedObject = null;
 
+        // O som antes do PopMode. Ao contrário, o movimento já estava
+        // destrancado quando o clip arrancava, e o primeiro passo — que chega
+        // aos 1,4 m em ~0,28 s — reescrevia o pitch do AudioSource partilhado
+        // a meio da cauda de um clip de 0,30 a 0,41 s.
+        Tocar(putdownClips);
+
         if (stateMachine != null)
             stateMachine.PopMode(PlayerState.Inspecting);
 
         ShowUI(false, null);
-
-        Tocar(putdownClips);
     }
 
     // Sobrevive a não haver clips: até os haver, não toca nada e não estoira.
