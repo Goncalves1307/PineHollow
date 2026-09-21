@@ -1,8 +1,9 @@
 # Pine Hollow — Direcção artística
 
-> **Estado: quadro de decisão, não direcção fechada.** As secções 1, 2 e 4 são factos e restrições.
-> A secção 3 são **três direcções em aberto** — escolhe-se uma e este cabeçalho muda.
-> A secção 5 (regra 1986/2026) vai **proposta**, porque é a que a mecânica do jogo quase decide sozinha.
+> **Estado: direcção escolhida a 2026-09-21.** É a **A** como regra de luz, com **C** nos interiores
+> importantes e **B** reservada a momentos narrativos — ver §3. A regra 1986/2026 da §5 foi
+> **confirmada**. Fica em aberto apenas a **paleta concreta** e a **recolha de referências** (§4),
+> que dependem de se ver imagens.
 >
 > Companheiro: `Pine_Hollow_Producao.md` (o que custa) · Última revisão: 2026-09-21.
 
@@ -84,14 +85,23 @@ tinta lascada, betão manchado, cobre oxidado. A paleta é rica, mas é rica ao 
 - **É a que melhor serve `GAME_DESIGN:53`** — a cidade que envelheceu ao longo de décadas está na matéria,
   não na luz.
 
-### Recomendação
+### ✅ Decidido (2026-09-21)
 
-**A como direcção do jogo, com B reservada para momentos narrativos**, e migrar para C nos interiores
-importantes — a casa do Ethan, o estúdio, a fábrica — onde o jogador está perto e o custo de autorar
-matéria se paga, porque é lá que ele olha de verdade. A e C não são incompatíveis: A é a regra de luz,
-C é a regra de matéria. Com 0 € de orçamento, A é o único arranque honesto.
+**A é a direcção do jogo.** É a regra de luz: céu encoberto de fim de Outono, difusa e sem direcção
+forte, sombras abertas, contraste médio, saturação baixa mas presente. Vale em todo o lado por
+omissão, e é a que garante a regra 1 da §2 — a fotografia casa sempre com o mundo.
 
-**Isto não está decidido.** É o que eu faria; a escolha é tua.
+**C aplica-se aos interiores importantes** — casa do Ethan, estúdio, fábrica, câmara subterrânea. É
+a regra de **matéria**: aí a cor vem das superfícies e não da luz, e o custo de autorar desgaste
+paga-se porque é onde o jogador está perto e olha de verdade. A e C não competem: A diz como se
+ilumina, C diz de que é feito.
+
+**B fica para momentos narrativos**, não para o jogo inteiro — o capítulo em que a cidade se esvazia,
+a fábrica de 1986 a trabalhar. Cada uso de B é uma excepção com nome, e paga o preço da §3: em
+Forward+ o motor não trava as luzes por pixel, portanto conta-se à mão.
+
+Com 0 € de orçamento e uma pessoa, A é o único arranque possível; C entra onde se justifica, uma
+divisão de cada vez.
 
 ## 4. Referências visuais — o que eu não posso fazer
 
@@ -164,8 +174,8 @@ grading. São lixo do pacote URP, não do projecto.
 
 ## Em aberto — o que falta decidir
 
-- [ ] **A direcção**: A, B, C, ou a mistura recomendada.
-- [ ] **Paleta concreta** — só depois de escolhida a direcção e vistas as referências.
-- [ ] **Referências**: recolher, e decidir se `Referencias/` entra no repositório ou fica de fora.
-- [ ] **Regra 1986/2026**: confirmar a proposta da §5, ou contestá-la.
+- [x] **A direcção** — A como regra de luz, C nos interiores importantes, B só em momentos (§3).
+- [x] **Regra 1986/2026** — confirmada como está na §5: a geometria nunca muda.
+- [ ] **Paleta concreta** — falta, e depende de se verem referências.
+- [ ] **Referências**: recolher (§4), e decidir se `Referencias/` entra no repositório ou fica de fora.
 - [ ] **Grão e registo de lente do jogo** (não das fotografias): quanto, ou nenhum. Ver regra 3 da §2.

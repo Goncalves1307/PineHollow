@@ -33,18 +33,18 @@ Código total: **11 scripts, ~840 linhas**, uma cena jogável.
 
 ## Fase a fase
 
-### FASE 0 — Pré-produção · ~85%
+### FASE 0 — Pré-produção · ~90%
 
 > Revisto a 2026-09-21 (task `869f4yfdz`). Duas entregas novas na raiz:
 > `Pine_Hollow_Producao.md` (limites técnicos + lista de assets) e
-> `Pine_Hollow_Direccao_Artistica.md` (quadro de decisão, direcção **por escolher**).
+> `Pine_Hollow_Direccao_Artistica.md` (direcção **escolhida**; falta só a paleta e as referências).
 
 | Item | Estado | Nota |
 |---|---|---|
 | Conceito, história, GDD, core gameplay, personagens, estrutura narrativa | ✅ | Documentos na raiz do repo |
 | **Mapa conceptual** | ❌ | 🔴 **o plano dava como feito e não está** — `GDD:150-169` é uma lista de 20 locais, não um mapa: sem adjacências, sem distâncias, sem planta, zero imagens no repo. Reaberto no plano. **Bloqueia a FASE 9** |
-| Referências visuais finais | ❌ | Protocolo e candidatos em `Pine_Hollow_Direccao_Artistica.md` §4. As imagens **não foram recolhidas** |
-| Direção artística final | ❌ | Restrições, três direcções e regra 1986/2026 escritas; **falta escolher uma** — é isso que fecha o item |
+| Referências visuais finais | ❌ | **O único item da FASE 0 ainda por fechar.** Protocolo e candidatos em `Pine_Hollow_Direccao_Artistica.md` §4; as imagens não foram recolhidas |
+| Direção artística final | ✅ | **A** (céu encoberto) é a regra de luz; **C** (cor na matéria) nos interiores importantes; **B** (luz praticável) só em momentos narrativos. Regra 1986/2026 confirmada: a geometria nunca muda entre épocas |
 | Lista final de assets | ✅ | `Pine_Hollow_Producao.md` §2 — cobre os 22 locais, os 16 itens da FASE 18 e os 13 do slice |
 | Limites técnicos | ✅ | `Pine_Hollow_Producao.md` §1 — plataformas, 60 fps, máquina mínima, orçamentos |
 
