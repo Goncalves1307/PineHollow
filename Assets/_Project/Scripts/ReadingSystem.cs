@@ -40,10 +40,22 @@ public class ReadingSystem : MonoBehaviour
         }
     }
 
-    public void Read(string title, string body)
+    public bool Read(string title, string body)
     {
         if (isReading)
-            return;
+            return false;
+
+        // Sem painel não se empurra o modo. Empurrar na mesma trancava o
+        // jogador — nem anda, nem olha, cursor preso — com o ecrã na mesma, e
+        // só o Esc o tirava de lá.
+        if (readingPanel == null)
+        {
+            Debug.LogError(
+                $"[{name}] Ecrã de leitura sem painel: não abro para não " +
+                "trancar o jogador num ecrã que não existe.",
+                this);
+            return false;
+        }
 
         isReading = true;
 
@@ -53,11 +65,12 @@ public class ReadingSystem : MonoBehaviour
         if (bodyText != null)
             bodyText.text = body;
 
-        if (readingPanel != null)
-            readingPanel.SetActive(true);
+        readingPanel.SetActive(true);
 
         if (stateMachine != null)
             stateMachine.PushMode(PlayerState.Reading);
+
+        return true;
     }
 
     public void Close()

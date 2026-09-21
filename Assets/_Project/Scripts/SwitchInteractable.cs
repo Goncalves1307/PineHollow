@@ -27,14 +27,21 @@ public class SwitchInteractable : MonoBehaviour, IInteractable
 
     private void Start()
     {
+        isOn = startsOn;
+
         if (toggleBody != null)
         {
-            offRotation = toggleBody.localRotation;
-            onRotation =
-                offRotation * Quaternion.Euler(toggleAngle, 0f, 0f);
+            // A pose autorada é a do estado inicial, não a de "apagado":
+            // com startsOn, um interruptor colocado visualmente em "ligado"
+            // saltava mais toggleAngle no primeiro frame.
+            Quaternion autorada = toggleBody.localRotation;
+            Quaternion deslocada =
+                autorada * Quaternion.Euler(toggleAngle, 0f, 0f);
+
+            offRotation = isOn ? deslocada : autorada;
+            onRotation = isOn ? autorada : deslocada;
         }
 
-        isOn = startsOn;
         ApplyState();
     }
 

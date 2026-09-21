@@ -29,8 +29,11 @@ public class DocumentInteractable : MonoBehaviour, IInteractable
         if (readingSystem == null)
             return;
 
-        hasBeenRead = true;
-        readingSystem.Read(title, body);
+        // Só conta como lido se o ecrã abriu mesmo. Marcá-lo antes dava um
+        // documento lido para a investigação da FASE 6 sem o jogador ter visto
+        // uma linha.
+        if (readingSystem.Read(title, body))
+            hasBeenRead = true;
     }
 
     public string GetInteractionText()

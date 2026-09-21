@@ -8,6 +8,11 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
 {
     [Header("Movimento")]
     [SerializeField] private Transform drawerBody;
+
+    // Ambos exigem valor positivo, e o Start recusa-se a arrancar sem ele.
+    // Com openDistance negativo o MoveTowards afasta-se do alvo e a gaveta
+    // parte para o infinito; com openSpeed a zero nunca converge. Nos dois
+    // casos o isMoving ficava preso e o objecto morria em silêncio.
     [SerializeField] private float openDistance = 0.35f;
     [SerializeField] private float openSpeed = 4f;
 
@@ -25,10 +30,29 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
     public string StateId => stateId;
     public bool IsOpen => isOpen;
 
+    private bool isUsable;
+
     private void Start()
     {
         if (drawerBody == null)
+        {
+            Debug.LogError(
+                $"[{name}] Gaveta sem drawerBody: não vai responder ao E.",
+                this);
             return;
+        }
+
+        if (openDistance <= 0f || openSpeed <= 0f)
+        {
+            Debug.LogError(
+                $"[{name}] Gaveta com openDistance={openDistance} e " +
+                $"openSpeed={openSpeed}: ambos têm de ser positivos. Para " +
+                "abrir ao contrário, roda o móvel.",
+                this);
+            return;
+        }
+
+        isUsable = true;
 
         closedPosition = drawerBody.localPosition;
 
@@ -40,7 +64,7 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
 
     private void Update()
     {
-        if (!isMoving || drawerBody == null)
+        if (!isMoving || !isUsable)
             return;
 
         Vector3 targetPosition =
@@ -63,7 +87,9 @@ public class DrawerInteractable : MonoBehaviour, IInteractable
 
     public void Interact()
     {
-        if (isMoving)
+        // Sem isUsable nem se comuta o estado: comutar e não se mexer deixava
+        // a gaveta a dizer "Fechar" sem nunca ter aberto.
+        if (isMoving || !isUsable)
             return;
 
         isOpen = !isOpen;

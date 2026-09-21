@@ -8,10 +8,13 @@ public class InteractionSystem : MonoBehaviour
     [SerializeField] private Camera playerCamera;
     [SerializeField] private float interactionDistance = 3f;
 
-    // Só a layer 8 (Interactable). O filtro vive aqui e não no
-    // m_QueriesHitTriggers global, que fica a 1: mexer no flag mudava o
-    // comportamento de todas as queries do projecto, não só o deste raycast.
-    [SerializeField] private LayerMask interactableMask;
+    // O que o raio CONSIDERA — geometria do mundo incluída, não só a layer 8.
+    // Restringir a máscara aos interactables parecia limpo e tirava a oclusão:
+    // sem as paredes no raio, o foco atravessava-as e o E abria a porta do
+    // outro lado do tabique. Quem responde decide-se no fim, por ter ou não
+    // IInteractable; o que fica de fora daqui é só quem nunca deve travar o
+    // raio — o próprio player, a UI e as layers de render.
+    [SerializeField] private LayerMask raycastMask;
 
     [Header("UI")]
     [SerializeField] private GameObject interactionPrompt;
@@ -67,14 +70,18 @@ public class InteractionSystem : MonoBehaviour
                 playerCamera.transform.forward
             );
 
-            // Máscara + Ignore: sem elas o raio parava no primeiro collider
-            // qualquer — um trigger volume ou uma grade não-interactiva à frente
-            // da porta roubavam-lhe o foco e a porta deixava de responder.
+            // Ignore nos triggers: o m_QueriesHitTriggers do projecto está a 1
+            // e fica a 1 — mexer no flag mudava todas as queries. Sem isto, o
+            // primeiro trigger volume à frente da porta roubava-lhe o foco.
+            //
+            // O sólido continua a travar o raio, e é isso que dá a oclusão: se
+            // o que estiver mais perto não for interactivo, não há foco, que é
+            // o que se espera de uma parede.
             if (Physics.Raycast(
                 ray,
                 out RaycastHit hit,
                 interactionDistance,
-                interactableMask,
+                raycastMask,
                 QueryTriggerInteraction.Ignore))
             {
                 // Em parent e não no próprio collider: a gaveta e o interruptor

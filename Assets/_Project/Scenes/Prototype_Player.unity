@@ -698,9 +698,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NewMonoBehaviourScript
   playerCamera: {fileID: 1955434907}
   interactionDistance: 3
-  interactableMask:
+  raycastMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 4294965723
   interactionPrompt: {fileID: 817459065}
   interactionText: {fileID: 817459067}
   stateMachine: {fileID: 315431424}
@@ -3516,7 +3516,7 @@ MonoBehaviour:
   doorPivot: {fileID: 1618990954}
   openAngle: 90
   openSpeed: 3
-  stateId: 
+  stateId: prototipo/porta
 --- !u!1 &2071690865
 GameObject:
   m_ObjectHideFlags: 0

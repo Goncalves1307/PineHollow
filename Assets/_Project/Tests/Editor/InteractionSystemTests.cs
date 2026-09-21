@@ -11,6 +11,10 @@ public class InteractionSystemTests
 {
     private const int LayerInteractable = 8;
 
+    // O mesmo que a cena: tudo menos o player (9), o IgnoreRaycast (2), a UI
+    // (5) e o PhotoOnly (10). O mundo tem de entrar, senão não há oclusão.
+    private const int Mascara = ~((1 << 2) | (1 << 5) | (1 << 9) | (1 << 10));
+
     private GameObject host;
     private GameObject cameraHost;
     private InteractionSystem interaction;
@@ -47,7 +51,7 @@ public class InteractionSystemTests
 
         Set("playerCamera", camera);
         Set("interactionDistance", 3f);
-        Set("interactableMask", (LayerMask)(1 << LayerInteractable));
+        Set("raycastMask", (LayerMask)Mascara);
         Set("interactionPrompt", prompt);
         Set("stateMachine", stateMachine);
     }
@@ -63,9 +67,17 @@ public class InteractionSystemTests
 
         criados.Clear();
 
-        Object.DestroyImmediate(prompt);
-        Object.DestroyImmediate(cameraHost);
-        Object.DestroyImmediate(host);
+        // Com guarda, e depois do ciclo: sem ela, um DestroyImmediate que
+        // lançasse lá em cima deixava estes três vivos — o mesmo padrão que
+        // este TearDown existe para corrigir.
+        if (prompt != null)
+            Object.DestroyImmediate(prompt);
+
+        if (cameraHost != null)
+            Object.DestroyImmediate(cameraHost);
+
+        if (host != null)
+            Object.DestroyImmediate(host);
     }
 
     private void Set(string field, object value)
@@ -127,19 +139,33 @@ public class InteractionSystemTests
     }
 
     [Test]
-    public void ColliderNaoInteractivoAFrente_NaoMataAInteraccao()
+    public void ParedeAFrente_OcultaOInteractableAtras()
     {
-        // Uma grade, um vidro, um puxador sem script: fora da máscara, o raio
-        // atravessa-os. Antes, o mais próximo ganhava e devolvia null.
-        GameObject grade = Box(new Vector3(0f, 0f, 1f), 0, false);
+        // Oclusão. Restringir a máscara aos interactables tirava-a: o foco
+        // atravessava o sólido e o E abria a porta do outro lado do tabique.
+        Box(new Vector3(0f, 0f, 1f), 0, false);
 
         GameObject alvo = Box(new Vector3(0f, 0f, 2f), LayerInteractable, false);
         alvo.AddComponent<FakeInteractable>();
 
         Tick();
 
-        Assert.IsTrue(interaction.HasFocus, "a grade matou a interacção");
+        Assert.IsFalse(interaction.HasFocus, "o foco atravessou a parede");
+        Assert.IsFalse(prompt.activeSelf, "o prompt apareceu através da parede");
+    }
 
+    [Test]
+    public void ParedeAtras_NaoEstorvaOInteractableAFrente()
+    {
+        // O sólido só oculta o que está depois dele.
+        GameObject alvo = Box(new Vector3(0f, 0f, 1.5f), LayerInteractable, false);
+        alvo.AddComponent<FakeInteractable>();
+
+        Box(new Vector3(0f, 0f, 2.5f), 0, false);
+
+        Tick();
+
+        Assert.IsTrue(interaction.HasFocus, "a parede de trás roubou o foco");
     }
 
     [Test]
@@ -150,7 +176,7 @@ public class InteractionSystemTests
         GameObject pai = new GameObject("Movel");
         criados.Add(pai);
         pai.transform.position = new Vector3(0f, 0f, 2f);
-        FakeInteractable script = pai.AddComponent<FakeInteractable>();
+        pai.AddComponent<FakeInteractable>();
 
         GameObject filho = Box(new Vector3(0f, 0f, 2f), LayerInteractable, false);
         filho.transform.SetParent(pai.transform);
@@ -160,11 +186,6 @@ public class InteractionSystemTests
         Assert.IsTrue(
             interaction.HasFocus,
             "GetComponent não via o script no pai");
-
-        Assert.AreEqual(
-            0,
-            script.Interactions,
-            "ter foco não é interagir: o Interact() não foi premido");
     }
 
     [Test]

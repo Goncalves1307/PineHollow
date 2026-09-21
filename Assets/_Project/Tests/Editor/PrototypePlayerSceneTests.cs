@@ -191,18 +191,25 @@ public class PrototypePlayerSceneTests
 
         LayerMask mascara = (LayerMask)typeof(InteractionSystem)
             .GetField(
-                "interactableMask",
+                "raycastMask",
                 BindingFlags.NonPublic | BindingFlags.Instance)
             .GetValue(interaccao);
 
         Assert.AreNotEqual(
             0,
             mascara.value,
-            "interactableMask está a Nothing: o raycast não acerta em nada e " +
+            "raycastMask está a Nothing: o raycast não acerta em nada e " +
             "nenhum objecto da cena é interactivo."
         );
 
-        int layerInteractable = LayerMask.NameToLayer("Interactable");
+        Assert.AreNotEqual(
+            0,
+            mascara.value & ~(1 << layerInteractableCedo()),
+            "A máscara só vê a layer Interactable: sem o mundo no raio não há " +
+            "oclusão, e o foco atravessa paredes."
+        );
+
+        int layerInteractable = layerInteractableCedo();
 
         Assert.AreNotEqual(
             -1,
@@ -238,11 +245,29 @@ public class PrototypePlayerSceneTests
 
             encontrados++;
 
-            Assert.AreEqual(
-                layerInteractable,
-                comportamento.gameObject.layer,
-                $"'{comportamento.name}' implementa IInteractable mas está na " +
-                $"layer {comportamento.gameObject.layer}: o raycast não o vê."
+            // O que tem de estar na layer 8 é o collider que se toca, e num
+            // objecto composto (gaveta, interruptor) esse vive num filho —
+            // exigi-lo ao GameObject do script contradizia o
+            // GetComponentInParent e obrigava a pôr o móvel inteiro na layer.
+            Collider[] colliders =
+                comportamento.GetComponentsInChildren<Collider>(true);
+
+            bool alcancavel = false;
+
+            foreach (Collider collider in colliders)
+            {
+                if (collider.gameObject.layer == layerInteractable &&
+                    !collider.isTrigger)
+                {
+                    alcancavel = true;
+                    break;
+                }
+            }
+
+            Assert.IsTrue(
+                alcancavel,
+                $"'{comportamento.name}' implementa IInteractable mas não tem " +
+                "um collider sólido na layer 'Interactable': o raycast não o vê."
             );
         }
 
@@ -289,15 +314,30 @@ public class PrototypePlayerSceneTests
                 if (valor == null)
                     continue;
 
-                Assert.AreNotSame(
-                    prompt,
-                    valor,
+                // Não basta comparar com o GameObject do prompt: um campo a
+                // apontar ao TMP_Text lá dentro dá o mesmo piscar, porque
+                // SetActive num filho esconde a mesma coisa.
+                GameObject alvo = valor as GameObject;
+
+                if (alvo == null && valor is Component componente)
+                    alvo = componente.gameObject;
+
+                if (alvo == null)
+                    continue;
+
+                Assert.IsFalse(
+                    alvo == prompt || alvo.transform.IsChildOf(prompt.transform),
                     $"'{comportamento.GetType().Name}.{campo.Name}' também " +
-                    "aponta ao prompt de interacção: são dois donos, e foi " +
+                    "alcança o prompt de interacção: são dois donos, e foi " +
                     "assim que o prompt piscava com o texto velho."
                 );
             }
         }
+    }
+
+    private static int layerInteractableCedo()
+    {
+        return LayerMask.NameToLayer("Interactable");
     }
 
     private static T ProcurarNaCena<T>() where T : Object
