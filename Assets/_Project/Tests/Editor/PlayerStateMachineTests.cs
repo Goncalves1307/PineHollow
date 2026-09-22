@@ -381,4 +381,51 @@ public class PlayerStateMachineTests
         Assert.IsFalse(stateMachine.ConsumeBack(PlayerState.Inspecting),
             "Um Esc não consumido não pode transitar para o frame seguinte.");
     }
+
+    // O Flashback é a única camada da pilha que NÃO tranca o player. O GDD §14
+    // é explícito: «todos são jogáveis» — anda-se, observa-se e segue-se gente.
+    // Enquanto caiu no default dos dois switches, empurrar este modo deixava o
+    // jogador imóvel e sem poder olhar, sem dar erro nenhum.
+
+    [Test]
+    public void Flashback_NaoTrancaOMovimentoNemOOlhar()
+    {
+        stateMachine.PushMode(PlayerState.Flashback);
+
+        Assert.AreEqual(PlayerState.Flashback, stateMachine.Current);
+        Assert.IsFalse(
+            stateMachine.IsMovementLocked,
+            "num flashback anda-se — não é uma cutscene");
+        Assert.IsFalse(
+            stateMachine.IsLookLocked,
+            "num flashback observa-se: sem olhar não se percebe que se está no passado");
+    }
+
+    [Test]
+    public void Flashback_NaoLibertaOCursor()
+    {
+        // Se libertasse, o IsCursorFree punha IsMovementLocked e IsLookLocked a
+        // true outra vez e desfazia o teste acima pela porta das traseiras.
+        stateMachine.PushMode(PlayerState.Flashback);
+
+        Assert.IsFalse(
+            stateMachine.IsCursorFree,
+            "o cursor solto tranca movimento e olhar, e o flashback ficava a ver navios");
+    }
+
+    [Test]
+    public void Flashback_ContinuaAContarComoCamadaAberta()
+    {
+        // Não trancar não é não existir: enquanto ele está na pilha, o
+        // ConsumeBack do que estiver por baixo não pode disparar.
+        stateMachine.PushMode(PlayerState.Flashback);
+
+        Assert.AreEqual(1, stateMachine.OpenModeCount);
+        Assert.IsTrue(stateMachine.IsTopMode(PlayerState.Flashback));
+
+        stateMachine.PopMode(PlayerState.Flashback);
+
+        Assert.AreEqual(0, stateMachine.OpenModeCount);
+        Assert.AreEqual(PlayerState.Normal, stateMachine.Current);
+    }
 }

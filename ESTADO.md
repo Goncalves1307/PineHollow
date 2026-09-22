@@ -12,8 +12,8 @@
 
 ## Veredicto
 
-Dos **12 milestones** do plano: **5 fechados, o 6.º a meio, 6 por abrir.** Fora dessa lista, a
-FASE 6 (investigação) fechou a 2026-09-22.
+Dos **12 milestones** do plano: **7 fechados, 5 por abrir.** Fora dessa lista, a FASE 6
+(investigação) fechou a 2026-09-22 e a FASE 7 (flashbacks) a 2026-09-22.
 
 | # | Milestone | Estado |
 |---|---|---|
@@ -22,17 +22,17 @@ FASE 6 (investigação) fechou a 2026-09-22.
 | 3 | Objeto examinável | ✅ |
 | 4 | Primeira fotografia | ✅ — `PhotoData`, fotografias autoradas, álbum vivo |
 | 5 | Duas fotografias + comparação | ✅ — lado a lado e sobreposição, com escala/posição/rotação |
-| 6 | Alinhamento | ⚠️ parcial — detecção, clarão e gatilho sim; o flashback é FASE 7 |
-| 7 | Primeiro flashback | ❌ |
+| 6 | Alinhamento | ✅ — detecção, clarão, gatilho, e o flashback que o consome |
+| 7 | Primeiro flashback | ✅ — ciclo completo 2026→1986→2026; conteúdo em placeholder |
 | 8 | Alteração da fotografia | ❌ |
 | 9 | Vertical Slice completo | ❌ |
 | 10 | Pine Hollow | ❌ |
 | 11 | Conteúdo narrativo completo | ❌ |
 | 12 | Polimento e lançamento | ❌ |
 
-Código total: **37 scripts** de jogo, duas cenas (`Bootstrap` e `Prototype_Player`), mais
-quatro scripts de editor (validador da FASE 1, montagem e capturas da FASE 5, montagem da
-FASE 6) e **211 testes EditMode** em catorze ficheiros.
+Código total: **49 scripts** de jogo, duas cenas (`Bootstrap` e `Prototype_Player`), mais
+seis scripts de editor (validador da FASE 1, montagem e capturas da FASE 5, montagem da
+FASE 6, montagem e capturas da FASE 7) e **264 testes EditMode** em dezassete ficheiros.
 
 ---
 
@@ -266,21 +266,50 @@ os `exigeId` do asset são o contrato com essa fase.
 ⚠️ **Os cartões do quadro não têm onde crescer.** Nove cabem numa grelha de três colunas; com o
 conteúdo da FASE 11 vão transbordar por baixo. Falta scroll ou zoom no quadro.
 
-### FASES 7 a 27 · 0%
+### FASE 7 · Sistema de flashbacks · ✅ mecanismo completo
 
-World state e flashbacks · vertical slice · blockout · casa · Ethan · NPCs · fábrica · túneis ·
-câmara subterrânea · capítulos · áudio · arte · iluminação · UI · saves · optimização · QA ·
-polimento · playtests · build · finais. **Nada começado** — mas a FASE 7 já tem por onde entrar:
-`PhotoComparisonSystem.ConsumirAlinhamento()`, que continua sem consumidor.
+O ciclo 2026 → alinhamento → transição → 1986 → gameplay → evento → 2026 corre de ponta a ponta.
+`SistemaDeFlashback` consome o `PhotoComparisonSystem.ConsumirAlinhamento()`, que estava escrito
+desde a FASE 5 à espera de alguém; `EstadoDoMundo` guarda a época e o que nela mudou, no Bootstrap
+e por `Instancia`, à maneira do `RegistoDeConhecimento`; `ObjectoDeEpoca` liga e desliga o que só
+existe numa das épocas; o `DoorInteractable` passou a **escrever** e a **ler** dali. A transição é
+um véu preto — nunca pós-processamento, que desloca a imagem —, com a luz a passar de fria (2026,
+só entra o céu) a quente (1986, tungsténio aceso) e as duas ambiências a cruzarem-se.
+
+⚠️ **Falta conteúdo, não mecanismo.** O Thomas é uma cápsula sem modelo; as duas fontes de áudio
+estão montadas e ligadas **sem clip**, porque o projecto não tem betão nem metal; e dos quatro
+degraus do `NivelDeConsciencia` só o `Inconsciente` tem conteúdo autorado a usá-lo — os outros três
+estão implementados e testados à espera dos flashbacks que os hão-de pedir.
+
+⚠️ **Falta o grading por época.** A transição muda o véu, a cor e a intensidade da luz
+direccional e a luz ambiente — mas **não toca no volume profile**. Ficou de fora de propósito: é o
+asset que o batchmode reserializa sozinho, repondo os quatro efeitos que a FASE 1 removeu por
+deslocarem a imagem e inviabilizarem o alinhamento. Mexer-lhe por código queria dizer arriscar
+esses quatro a cada corrida de testes. A diferença entre as épocas está hoje toda na luz, que a
+direcção artística §7 diz ser «a regra das duas épocas na prática» — mas o grading é dívida, não
+está feito.
+
+⚠️ **O world state NÃO grava em disco.** Atravessa as trocas de época e a sessão em memória, e mais
+nada. O formato é o do save (uma lista de `AlteracaoDeMundo`), mas escrever o ficheiro é a FASE 21.
+
+### FASES 8 a 27 · 0%
+
+Vertical slice · blockout · casa · Ethan · NPCs · fábrica · túneis · câmara subterrânea ·
+capítulos · áudio · arte · iluminação · UI · saves · optimização · QA · polimento · playtests ·
+build · finais. **Nada começado.**
 
 ---
 
 ## As duas conclusões que mudam o próximo passo
 
-**1. O world state é pré-requisito de tudo o que é narrativo, e não existe.** A Fase 7 pede estado
-2026 e estado 1986, e o Capítulo 4 depende de um flashback **criar** uma porta que passa a existir
-em 2026. Nenhum script tem noção de época, e o `DoorInteractable` guarda o estado em campos
-privados que ninguém lê nem grava. Cada interactable novo escrito sem isto é um que se reescreve.
+**1. O world state já existe, e é por ele que os interactables passam a falar.** Era o
+pré-requisito de tudo o que é narrativo e foi o que a FASE 7 entregou: `EstadoDoMundo` guarda a
+época e as alterações, e o `DoorInteractable` escreve-lhe ao ser usado e lê-lhe ao preparar-se —
+uma porta aberta em 1986 aparece aberta em 2026. O Capítulo 4 já tem onde assentar.
+
+Quem escrever um interactable novo liga-o ao `EstadoDoMundo` pelo `stateId`, como a porta faz.
+Os outros cinco interactables **ainda não o fazem**: têm o `stateId` autorado e a propriedade de
+estado, mas continuam a guardar o estado só para si. É trabalho pequeno e por fazer.
 
 **2. O vertical slice não precisa da máquina fotográfica.** A lista do GDD §26 e da Fase 8 é:
 estrada → casa → estúdio → 1.ª e 2.ª fotografia → pista do Ethan → inspeção → comparação →

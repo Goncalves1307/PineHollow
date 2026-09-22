@@ -38,7 +38,13 @@ public enum PlayerState
     // jogo e não um HUD.
     ViewingBoard,
 
-    // Previsto pelo plano (2.5) mas inalcançável até à FASE 7: o world state
-    // 2026/1986 ainda não existe, e é ele que faz entrar e sair daqui.
+    // Estar em 1986. Entra-se por alinhar duas fotografias — o
+    // SistemaDeFlashback consome o ConsumirAlinhamento() e empurra este modo —
+    // e sai-se pelo evento que fecha o flashback.
+    //
+    // É uma camada que NÃO tranca o player: anda-se, olha-se e segue-se gente,
+    // porque o GDD §14 diz que todos os flashbacks são jogáveis. É a única
+    // camada da pilha de que isso é verdade, e por isso está escrita por nome
+    // nos dois switches do PlayerStateMachine em vez de cair no default.
     Flashback
 }

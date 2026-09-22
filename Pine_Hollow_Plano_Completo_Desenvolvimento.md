@@ -303,21 +303,28 @@ Evento
 2026
 ```
 
-- [ ] World State
-- [ ] Estado 2026
-- [ ] Estado 1986
-- [ ] Transição visual
-- [ ] Transição sonora
-- [ ] Spawn
-- [ ] NPCs históricos
-- [ ] Objetos históricos
-- [ ] Retorno ao presente
+- [x] World State — `EstadoDoMundo`, no Bootstrap, por `Instancia`
+- [x] Estado 2026
+- [x] Estado 1986
+- [x] Transição visual — véu preto; **nunca pós-processamento**, que desloca a imagem
+- [x] Transição sonora — cruzamento montado e ligado, **sem clips** (faltam betão e metal)
+- [x] Spawn — `ObjectoDeEpoca`, com varredura que inclui os desligados
+- [x] NPCs históricos — `PersonagemHistorica`; o Thomas é **cápsula placeholder**, sem modelo
+- [x] Objetos históricos
+- [x] Retorno ao presente
 
 Evolução:
-- [ ] Flashbacks iniciais observacionais
-- [ ] Personagens começam a reagir
-- [ ] Personagens conseguem ver o jogador
-- [ ] Ações deixam marcas no presente
+- [x] Flashbacks iniciais observacionais — é o degrau que o Thomas usa
+- [x] Personagens começam a reagir — `NivelDeConsciencia.Reage`, implementado e testado, **sem conteúdo autorado**
+- [x] Personagens conseguem ver o jogador — `NivelDeConsciencia.Ve`, idem
+- [x] Ações deixam marcas no presente — `NivelDeConsciencia.MarcaOPresente`, idem
+
+> **Fechado a 2026-09-22.** O que está por fazer é conteúdo (modelo do Thomas, clips de áudio,
+> flashbacks que subam os degraus), não mecanismo. O world state **não grava em disco** — isso é a
+> FASE 21, e o formato já é o do save.
+>
+> ⚠️ As checkboxes das FASES 0 a 6 continuam por acertar com o código; quando discordarem, ganha o
+> código, e o `ESTADO.md` é a auditoria.
 
 # FASE 8 — Vertical Slice
 

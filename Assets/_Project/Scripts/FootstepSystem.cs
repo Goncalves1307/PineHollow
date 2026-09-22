@@ -111,7 +111,7 @@ public class FootstepSystem : MonoBehaviour
         if (stateMachine == null)
             return walkStepDistance;
 
-        switch (stateMachine.Current)
+        switch (stateMachine.Locomotion)
         {
             case PlayerState.Crouching:
                 return crouchStepDistance;
@@ -129,7 +129,7 @@ public class FootstepSystem : MonoBehaviour
         if (stateMachine == null)
             return walkVolume;
 
-        switch (stateMachine.Current)
+        switch (stateMachine.Locomotion)
         {
             case PlayerState.Crouching:
                 return crouchVolume;

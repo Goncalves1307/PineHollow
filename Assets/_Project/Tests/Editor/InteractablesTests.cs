@@ -36,6 +36,185 @@ public class InteractablesTests
         // Sem isto, cada teste deixava para trás um registo criado de
         // emergência e o teste seguinte encontrava a cena suja.
         RegistoDeConhecimento.Esquecer();
+
+        // A FASE 7 pendurou o world state na porta: abrir passou a escrever
+        // nele. Sem isto, a porta de um teste chegava já aberta ao seguinte.
+        EstadoDoMundo.Esquecer();
+    }
+
+    // ------------------------------------------------------------- a porta
+
+    // A porta não tinha um único teste, apesar de ser o critério de aceitação
+    // literal da subtask do world state («o DoorInteractable lê o seu estado
+    // dali»). Estes são os primeiros.
+
+    private DoorInteractable PortaMontada(string stateId)
+    {
+        GameObject go = Novo("Porta");
+
+        DoorInteractable porta = go.AddComponent<DoorInteractable>();
+
+        GameObject pivot = Novo("Pivot");
+        pivot.transform.SetParent(go.transform);
+
+        Campo(porta, "doorPivot").SetValue(porta, pivot.transform);
+        Campo(porta, "stateId").SetValue(porta, stateId);
+
+        porta.Preparar();
+
+        return porta;
+    }
+
+    [Test]
+    public void Porta_ComutaOEstadoEOVerbo()
+    {
+        DoorInteractable porta = PortaMontada("porta-cave");
+
+        Assert.IsFalse(porta.IsOpen);
+        Assert.AreEqual("Abrir", porta.GetInteractionText());
+
+        porta.Interact();
+
+        Assert.IsTrue(porta.IsOpen);
+        Assert.AreEqual("Fechar", porta.GetInteractionText());
+    }
+
+    [Test]
+    public void Porta_EscreveOSeuEstadoNoMundo()
+    {
+        DoorInteractable porta = PortaMontada("porta-cave");
+
+        porta.Interact();
+
+        Assert.IsTrue(
+            EstadoDoMundo.Instancia.LerBool("porta-cave", DoorInteractable.ChaveAberta),
+            "abrir a porta não chegou ao world state");
+    }
+
+    [Test]
+    public void Porta_LeOSeuEstadoDoMundoAoPreparar()
+    {
+        // O caso real da task: a porta foi aberta noutra época, e ao chegar a
+        // esta já tem de estar aberta — sem se abrir à frente do jogador.
+        EstadoDoMundo.Instancia.Registar(
+            "porta-fabrica", DoorInteractable.ChaveAberta, true);
+
+        DoorInteractable porta = PortaMontada("porta-fabrica");
+
+        Assert.IsTrue(
+            porta.IsOpen,
+            "a porta não leu o seu estado do world state");
+        Assert.IsFalse(
+            porta.IsMoving,
+            "uma porta que já estava aberta não se abre outra vez à frente do jogador");
+    }
+
+    [Test]
+    public void Porta_AplicarAntesDePreparar_NaoCorrompeAsRotacoes()
+    {
+        // Regressão apanhada por revisor externo. Uma porta instanciada em
+        // runtime — que é o que o world state passa a fazer — pode receber
+        // Aplicar(true) antes do Start. O Preparar() recapturava as rotações às
+        // cegas e tomava a pose ABERTA como sendo a fechada: a porta passava a
+        // abrir 180º e a «fechar» para aberta.
+        GameObject go = Novo("PortaInstanciada");
+
+        DoorInteractable porta = go.AddComponent<DoorInteractable>();
+
+        GameObject pivot = Novo("Pivot");
+        pivot.transform.SetParent(go.transform);
+
+        Campo(porta, "doorPivot").SetValue(porta, pivot.transform);
+        Campo(porta, "stateId").SetValue(porta, "porta-instanciada");
+
+        Quaternion fechada = pivot.transform.localRotation;
+
+        // Alguém abre a porta antes de o Start correr.
+        porta.Aplicar(true);
+
+        Assert.AreNotEqual(
+            fechada, pivot.transform.localRotation,
+            "o Aplicar não chegou a mexer na porta — o teste não prova nada");
+
+        porta.Preparar();
+
+        // E agora fecha-se: tem de voltar exactamente à pose original.
+        porta.Aplicar(false);
+
+        Assert.AreEqual(
+            0f,
+            Quaternion.Angle(fechada, pivot.transform.localRotation),
+            0.01f,
+            "fechar a porta não a devolveu à pose fechada de origem");
+    }
+
+    [Test]
+    public void Porta_SemStateId_ContinuaAAbrirEFechar()
+    {
+        // O revisor externo disse que a falta de `return` depois do LogError
+        // era defeito. Não é: sair ali deixava a porta sem rotações capturadas,
+        // ou seja imóvel. Uma porta sem stateId não persiste, mas funciona — e
+        // ids em branco não partilham estado nenhum, porque o
+        // EstadoDoMundo.Obter devolve null para eles.
+        GameObject go = Novo("PortaSemIdQueAbre");
+
+        DoorInteractable porta = go.AddComponent<DoorInteractable>();
+
+        GameObject pivot = Novo("Pivot");
+        pivot.transform.SetParent(go.transform);
+
+        Campo(porta, "doorPivot").SetValue(porta, pivot.transform);
+
+        LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(
+            "não tem stateId"));
+
+        porta.Preparar();
+
+        Quaternion fechada = pivot.transform.localRotation;
+
+        porta.Aplicar(true);
+
+        Assert.IsTrue(porta.IsOpen);
+        Assert.AreNotEqual(
+            fechada, pivot.transform.localRotation,
+            "uma porta sem stateId ficou imóvel — perdeu-se mais do que se ganhou");
+
+        // E não escreveu nada no mundo.
+        Assert.AreEqual(
+            0, EstadoDoMundo.Instancia.Total,
+            "uma porta sem stateId não pode sujar o world state");
+    }
+
+    [Test]
+    public void Porta_SemPivot_QueixaSeEmVezDeRebentar()
+    {
+        // Antes isto era um NullReferenceException. A FASE 7 passa a instanciar
+        // portas em runtime, onde o estoiro sairia longe de quem o causou.
+        GameObject go = Novo("PortaSemPivot");
+
+        DoorInteractable porta = go.AddComponent<DoorInteractable>();
+        Campo(porta, "stateId").SetValue(porta, "porta-sem-pivot");
+
+        LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(
+            "não tem doorPivot ligado"));
+
+        Assert.DoesNotThrow(() => porta.Preparar());
+    }
+
+    [Test]
+    public void Porta_SemStateId_QueixaSe()
+    {
+        GameObject go = Novo("PortaSemId");
+
+        DoorInteractable porta = go.AddComponent<DoorInteractable>();
+
+        GameObject pivot = Novo("Pivot");
+        Campo(porta, "doorPivot").SetValue(porta, pivot.transform);
+
+        LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(
+            "não tem stateId"));
+
+        porta.Preparar();
     }
 
     [Test]

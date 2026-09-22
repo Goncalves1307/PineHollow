@@ -82,11 +82,27 @@ game state, and writing it into the asset dirties the file on disk. Player captu
 `PhotoData.DeCaptura` and differ by one field, not by a second code path. The in-game camera is
 still a prototype of one verb, and still 256×256.
 
-**Nothing in the code anticipates two eras.** Fase 7 requires a World State with a 2026 state and a
-1986 state, and Chapter 4 turns on a flashback *creating* a door that then exists in 2026. No
-current script has any notion of era, and `DoorInteractable` holds its state in private fields with
-no external reader. Any new interactable should expect to become era-aware and world-state-driven;
-don't bury state where a save system and an era switch can't reach it.
+**The two eras exist, and they run through `EstadoDoMundo`.** Fase 7 delivered the World State:
+`Epoca` has `Presente2026` and `Passado1986`, `EstadoDoMundo` keeps the current era plus a list of
+`AlteracaoDeMundo` keyed by `(stateId, chave)`, and it lives on the Bootstrap object and is reached
+through `EstadoDoMundo.Instancia` — never a `[SerializeField]`, because Unity does not serialize
+cross-scene references. Same arbitration as `RegistoDeConhecimento`: an authored instance beats an
+emergency one and takes its contents (and its era) with it; `Assumir()` is public because `Awake`
+does not run in EditMode.
+
+`DoorInteractable` is the worked example: `Interact()` writes `(stateId, "aberta")` to the world,
+and `Preparar()` reads it back and snaps the pivot without animating. **The other five interactables
+do not do this yet** — they carry a `stateId` and a read-only state property, and nothing else.
+Wiring one up is small and follows the door.
+
+`MudarPara(Epoca)` never early-returns when the era is already the one asked for: calling it always
+puts the world in order, because an early return leaves whatever was already mounted untouched —
+the trap this codebase has fallen into twice. `ObjectoDeEpoca` marks what exists in only one era,
+and its sweep uses `FindObjectsInactive.Include` because an object of 1986 is *disabled* while you
+play 2026 and a sweep over actives only would never find it again.
+
+**It does not persist to disk.** Nothing in this project writes runtime state to disk; that is
+Fase 21, and the `AlteracaoDeMundo` list is already the shape the save will take.
 
 ## Commands
 
@@ -113,7 +129,7 @@ grep -nE "error CS|warning CS" Logs/Editor.log | tail -20
 
 `Logs/Editor.log` is append-only across sessions and currently ~10MB — always `tail`, never `cat`.
 
-**There are fourteen test files**, all EditMode, **211 tests**, in `Assets/_Project/Tests/Editor/`:
+**There are seventeen test files**, all EditMode, **264 tests**, in `Assets/_Project/Tests/Editor/`:
 `PlayerStateMachineTests`, `InteractionSystemTests`, `InteractablesTests`, `InspectionSystemTests`,
 `HighlightSystemTests`, `CrosshairSystemTests`, `PrototypePlayerSceneTests` (this one opens the
 real scene and asserts the inspector wiring), plus the FASE 5 four: `PhotoDataTests`,
@@ -168,7 +184,11 @@ There are two, both in the build settings, in this order:
 
 - `Assets/_Project/Scenes/Bootstrap.unity` — first in the build list. Holds `BootstrapLoader`,
   which `DontDestroyOnLoad`s itself and loads the game scene by name. This is where anything that
-  must survive a scene change belongs — the era switch of Fase 7 swaps scenes underneath it.
+  must survive a scene change belongs: `BootstrapLoader`, `RegistoDeConhecimento` and
+  `EstadoDoMundo`. **Fase 7 does *not* swap scenes** — an earlier note here said it would. The two
+  eras are two states of the *same* scene, because the art direction (§5) requires the geometry to
+  be identical across eras: the player aligns a 1986 photograph with a 2026 room, and two scenes
+  would drift apart the first time someone moved a wall in one and not the other.
 - `Assets/_Project/Scenes/Prototype_Player.unity` — the real scene. Player, door, inspectable
   object, the whole photography UI, and a global `Volume` with `PineHollowVolumeProfile`.
 
@@ -178,7 +198,7 @@ FASE 1.
 ## Architecture
 
 Scripts in `Assets/_Project/Scripts/`, flat, one `MonoBehaviour` per file, no namespaces (plus
-three editor-only scripts under `Editor/`, and `IInteractable`, `PlayerState`, `PhotoData`,
+six editor-only scripts under `Editor/`, and `IInteractable`, `PlayerState`, `PhotoData`,
 `PhotoMetadata`, `PhotoDiscovery` and `PhotoAlignment`, which are not `MonoBehaviour`s —
 `PhotoAsset` is a `ScriptableObject`). All the rest hang off the `Player` GameObject or off the
 object they act on. Four clusters:

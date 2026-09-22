@@ -43,6 +43,16 @@ public class PlayerStateMachine : MonoBehaviour
     // Quantas camadas estão abertas. Zero significa que o player manda.
     public int OpenModeCount => modeStack.Count;
 
+    // A locomoção por baixo da pilha. Enquanto nenhuma camada deixava andar,
+    // isto era igual ao Current e ninguém precisava dele — quem quisesse saber
+    // se o jogador corria ou se agachava perguntava ao Current e acertava.
+    //
+    // O Flashback quebrou essa igualdade: é a primeira camada que se empilha e
+    // deixa andar, e com ela no topo o Current responde «Flashback» a quem
+    // pergunta como é que o jogador se está a deslocar. Quem precisa da
+    // locomoção pergunta por aqui.
+    public PlayerState Locomotion => locomotionState;
+
     // Cursor solto significa que não se joga: nem se anda, nem se olha. É o
     // que impede a câmara de continuar a rodar com o rato livre.
     public bool IsMovementLocked => IsCursorFree || LocksMovement(Current);
@@ -216,6 +226,16 @@ public class PlayerStateMachine : MonoBehaviour
             case PlayerState.Sprinting:
             case PlayerState.Crouching:
             case PlayerState.Interacting:
+
+            // Num flashback ANDA-SE. O GDD §14 é explícito: durante um
+            // flashback o jogador anda, observa, segue personagens, explora e
+            // ouve conversas — «todos são jogáveis», não são cutscenes.
+            //
+            // Cair no default abaixo era o contrário disso: o modo estava
+            // declarado no PlayerState desde a FASE 2 e, empurrado, trancava o
+            // jogador imóvel. Não dava erro nenhum — dava um flashback a que
+            // só se assistia, que é precisamente o que este jogo não é.
+            case PlayerState.Flashback:
                 return false;
 
             default:
@@ -235,6 +255,17 @@ public class PlayerStateMachine : MonoBehaviour
 
             // Em modo fotografia o player não anda mas continua a apontar.
             case PlayerState.Photographing:
+                return false;
+
+            // Observar é metade do que se faz num flashback — o §15.1 pede que
+            // o jogador veja o Thomas junto ao lago e perceba que está no
+            // passado. Sem poder olhar em volta, não percebe coisa nenhuma.
+            //
+            // E NÃO entra no FreesCursor lá abaixo: soltar o cursor põe o
+            // IsCursorFree a true, e esse tranca movimento e olhar outra vez,
+            // desfazendo as duas linhas acima. Um flashback é jogado com o rato
+            // preso, como o resto do jogo.
+            case PlayerState.Flashback:
                 return false;
 
             default:

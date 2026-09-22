@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 1001100002}
   - component: {fileID: 1001100003}
   - component: {fileID: 1001100004}
+  - component: {fileID: 1001100005}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -178,6 +179,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RegistoDeConhecimento
   conhecidos: []
+--- !u!114 &1001100005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1001100001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a1ed79a9420992c4b6d4f704647ffb7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EstadoDoMundo
+  alteracoes: []
+  epocaActual: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
