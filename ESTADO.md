@@ -1,7 +1,7 @@
 # Pine Hollow — Estado do desenvolvimento
 
 > Auditoria das 27 fases do `Pine_Hollow_Plano_Completo_Desenvolvimento.md` contra o código real.
-> **Última verificação: 2026-09-21** (revista no fim da FASE 5), contra a árvore de trabalho
+> **Última verificação: 2026-09-22** (revista no fim da FASE 6), contra a árvore de trabalho
 > (`Assets/_Project/Scripts/`, `Assets/_Project/Scenes/Prototype_Player.unity`,
 > `ProjectSettings/`). A FASE 1 fechou nesse dia e os caminhos mudaram: tudo vive em
 > `Assets/_Project/` agora.
@@ -12,7 +12,8 @@
 
 ## Veredicto
 
-Dos **12 milestones** do plano: **5 fechados, o 6.º a meio, 6 por abrir.**
+Dos **12 milestones** do plano: **5 fechados, o 6.º a meio, 6 por abrir.** Fora dessa lista, a
+FASE 6 (investigação) fechou a 2026-09-22.
 
 | # | Milestone | Estado |
 |---|---|---|
@@ -29,9 +30,9 @@ Dos **12 milestones** do plano: **5 fechados, o 6.º a meio, 6 por abrir.**
 | 11 | Conteúdo narrativo completo | ❌ |
 | 12 | Polimento e lançamento | ❌ |
 
-Código total: **28 scripts**, duas cenas (`Bootstrap` e `Prototype_Player`), mais três
-scripts de editor (validador da FASE 1, montagem e capturas da FASE 5) e **157 testes
-EditMode** em onze ficheiros.
+Código total: **37 scripts** de jogo, duas cenas (`Bootstrap` e `Prototype_Player`), mais
+quatro scripts de editor (validador da FASE 1, montagem e capturas da FASE 5, montagem da
+FASE 6) e **211 testes EditMode** em catorze ficheiros.
 
 ---
 
@@ -227,12 +228,50 @@ destruídas no `OnDestroy` (as autoradas não se tocam, são assets), mas a list
 sem limite dentro de uma sessão. As **autoradas** têm a resolução validada a 2048×1368 — um aviso
 no `OnValidate`, que nunca dispara enquanto não houver imagem nenhuma.
 
-### FASES 6 a 27 · 0%
+### FASE 6 — Sistema de investigação · ✅ fechada (2026-09-22)
 
-Investigação/journal/board · world state e flashbacks · vertical slice · blockout · casa · Ethan ·
-NPCs · fábrica · túneis · câmara subterrânea · capítulos · áudio · arte · iluminação · UI · saves ·
-optimização · QA · polimento · playtests · build · finais. **Nada começado** — mas a FASE 7 já tem
-por onde entrar: `PhotoComparisonSystem.ConsumirAlinhamento()`.
+> Task `869f4yfgg` e as duas subtasks. O board entrou nesta corrida **por decisão do Diogo** —
+> a recomendação era adiá-lo até a FASE 11 dar conteúdo para organizar.
+
+| Bloco | Itens | Estado |
+|---|---|---|
+| Registo | modelo, arquivo, categorias fechadas | ✅ `Conhecimento.cs`, `RegistoDeConhecimento.cs` |
+| Journal | pessoas, locais, datas, fotografias, documentos, descobertas | ✅ 6/6 — `JournalSystem.cs`, tecla `J` |
+| Investigation Board | ligações do jogador, sem setas automáticas, sem checklist | ✅ 3/3 — `InvestigationBoardSystem.cs`, tecla `B` |
+| Progressão | a cadeia do GDD §17 | ✅ dez elos à letra em `Investigation/CadeiaDeConhecimento.asset` |
+
+**O que faltava não eram os ecrãs — era o andar de baixo.** Não havia registo de conhecimento
+nenhum, e as três coisas que o jogo já produzia não desaguavam em lado nenhum: a
+`DescobertasReveladas` da comparação é limpa a cada alinhamento (é o registo do *último*, não um
+arquivo), o `HasBeenRead` do documento não tinha leitor, e apanhar uma fotografia só a punha no
+álbum. As três passaram a escrever no `RegistoDeConhecimento`.
+
+**O registo vive no `Bootstrap`** — é o objecto que sobrevive às trocas de cena que a FASE 7 vai
+fazer. É alcançado por `RegistoDeConhecimento.Instancia` e não por `[SerializeField]` porque o
+Unity **não serializa referências entre cenas**. Entrar directamente no `Prototype_Player` cria
+um registo de emergência (`Automatico == true`), e o autorado toma-lhe o lugar quando aparece,
+levando com ele o que o outro já tinha aprendido.
+
+**A regra dura do GDD está em código, não em intenção.** O `LigacaoDoQuadro` não tem onde guardar
+um veredicto — só dois ids —, `AlternarLigacao` é a única porta por onde nasce uma ligação, e não
+há contador de «x de y». Três testes seguram cada uma dessas invariantes.
+
+**Progressão sem checklist:** a cadeia do §17 mostra a frase dos elos sabidos e um traço nos
+outros. Sem número a dizer quantos faltam — isso seria contar quanta história falta.
+
+⚠️ **Com o conteúdo de hoje acendem-se três dos dez elos** (Thomas, Thomas aparece em 1994, as
+fotografias ligam diferentes épocas). Os outros sete estão à espera das descobertas da FASE 11 —
+os `exigeId` do asset são o contrato com essa fase.
+
+⚠️ **Os cartões do quadro não têm onde crescer.** Nove cabem numa grelha de três colunas; com o
+conteúdo da FASE 11 vão transbordar por baixo. Falta scroll ou zoom no quadro.
+
+### FASES 7 a 27 · 0%
+
+World state e flashbacks · vertical slice · blockout · casa · Ethan · NPCs · fábrica · túneis ·
+câmara subterrânea · capítulos · áudio · arte · iluminação · UI · saves · optimização · QA ·
+polimento · playtests · build · finais. **Nada começado** — mas a FASE 7 já tem por onde entrar:
+`PhotoComparisonSystem.ConsumirAlinhamento()`, que continua sem consumidor.
 
 ---
 
@@ -284,3 +323,9 @@ Barata agora, cara depois — cada uma destas compõe com o conteúdo que vier a
       linha é o `InspectionSystem` e ele não sabe do fundo. Resolve-se dando-lhe a referência.
 - [ ] **A lista de capturas cresce sem limite dentro de uma sessão.** Só é libertada no
       `OnDestroy`.
+- [ ] **O quadro de investigação não tem scroll.** Com mais de ~12 cartões a grelha sai da
+      superfície. Barato agora, caro quando a FASE 11 despejar as descobertas do Ethan.
+- [ ] **O `local` das duas fotografias autoradas é o sítio onde a fotografia ESTÁ, não onde foi
+      tirada.** As duas dizem «Estúdio do Ethan» e a frente da de 1986 diz «Três pessoas à porta
+      da fábrica». O caderno mostra o que lá está, portanto mostra o dado errado. É conteúdo e
+      mexe em canon — ficou fora do âmbito da FASE 6 por decisão.

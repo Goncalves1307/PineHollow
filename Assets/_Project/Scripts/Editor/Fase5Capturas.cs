@@ -142,6 +142,15 @@ public static class Fase5Capturas
             FindObjectsInactive.Include
         );
         PlayerStateMachine maquina = Object.FindAnyObjectByType<PlayerStateMachine>();
+        ReadingSystem leitura = Object.FindAnyObjectByType<ReadingSystem>(
+            FindObjectsInactive.Include
+        );
+        JournalSystem caderno = Object.FindAnyObjectByType<JournalSystem>(
+            FindObjectsInactive.Include
+        );
+        InvestigationBoardSystem quadro = Object.FindAnyObjectByType<InvestigationBoardSystem>(
+            FindObjectsInactive.Include
+        );
 
         switch (passo)
         {
@@ -237,8 +246,91 @@ public static class Fase5Capturas
                 Capturar(pasta, "7-sobrepostas");
                 break;
 
+            // ---------------------------------------------------------
+            // FASE 6 — a investigação
+            //
+            // Vem DEPOIS de todo o fluxo da FASE 5 de propósito: um caderno
+            // capturado sem nada dentro e um quadro sem cartões provavam
+            // exactamente nada. Estes passos só valem porque o jogo antes
+            // deles produziu conhecimento a sério.
+            // ---------------------------------------------------------
+
             case 14:
+                Largar(maquina, comparacao);
+                break;
+
+            case 15:
+                Largar(maquina, album);
+                break;
+
+            case 16:
+                // Ler o documento que está na cena: é a terceira fonte do
+                // caderno, e a única que não vem de fotografias.
+                Ler();
+                break;
+
+            case 17:
+                Capturar(pasta, "8-documento");
+                break;
+
+            case 18:
+                Largar(maquina, leitura);
+                break;
+
+            case 19:
+                if (maquina != null && maquina.OpenModeCount > 0)
+                {
+                    Debug.LogError(
+                        "CAPTURAS: ainda há " + maquina.OpenModeCount +
+                        " camada(s) abertas — o J não vai abrir o caderno."
+                    );
+                }
+
+                if (caderno != null)
+                    caderno.Alternar();
+                break;
+
+            case 20:
+                Capturar(pasta, "9-caderno-pessoas");
+                break;
+
+            case 21:
+                if (caderno != null)
+                    caderno.Mostrar(CategoriaDeConhecimento.Descoberta);
+                break;
+
+            case 22:
+                Capturar(pasta, "10-caderno-descobertas");
+                break;
+
+            case 23:
+                Largar(maquina, caderno);
+                break;
+
+            case 24:
+                if (quadro != null)
+                    quadro.Alternar();
+                break;
+
+            case 25:
+                Capturar(pasta, "11-quadro");
+                break;
+
+            case 26:
+                // O gesto do jogador: marcar dois cartões. É o mesmo caminho
+                // que o clique direito percorre — o quadro não liga nada
+                // sozinho, e uma captura tirada por outra porta mostrava uma
+                // coisa que ninguém alcança.
+                Ligar(quadro);
+                break;
+
+            case 27:
+                Capturar(pasta, "12-quadro-ligado");
+                break;
+
+            case 28:
                 Relatar(comparacao);
+                Relatar(caderno, quadro);
                 break;
 
             default:
@@ -294,6 +386,57 @@ public static class Fase5Capturas
             $"activo={go.activeInHierarchy} visivel={(renderer != null && renderer.isVisible)} " +
             $"cullingMask={(camara != null ? camara.cullingMask : 0)}"
         );
+    }
+
+    private static void Ler()
+    {
+        DocumentInteractable documento =
+            Object.FindAnyObjectByType<DocumentInteractable>();
+
+        if (documento == null)
+        {
+            Debug.LogError("CAPTURAS: não há documento na cena para ler.");
+
+            return;
+        }
+
+        documento.Interact();
+    }
+
+    private static void Ligar(InvestigationBoardSystem quadro)
+    {
+        if (quadro == null || quadro.Cartoes.Count < 2)
+        {
+            Debug.LogError(
+                "CAPTURAS: o quadro tem menos de dois cartões — não há o que " +
+                "ligar, e é sinal de que o caderno não recebeu nada."
+            );
+
+            return;
+        }
+
+        quadro.AlternarMarcacao(quadro.Cartoes[0].Id);
+        quadro.AlternarMarcacao(quadro.Cartoes[1].Id);
+    }
+
+    // O que o jogador passou a saber, contado ao log. A captura mostra o ecrã;
+    // isto diz se o ecrã está a mostrar tudo o que devia.
+    private static void Relatar(JournalSystem caderno, InvestigationBoardSystem quadro)
+    {
+        RegistoDeConhecimento registo = RegistoDeConhecimento.Instancia;
+
+        Debug.Log(
+            $"CAPTURAS: conhecimento={registo.Total} " +
+            $"automatico={registo.Automatico} " +
+            $"cartoes={(quadro != null ? quadro.Cartoes.Count : 0)} " +
+            $"ligacoes={(quadro != null ? quadro.Ligacoes.Count : 0)}"
+        );
+
+        foreach (Conhecimento conhecimento in registo.Conhecidos)
+            Debug.Log($"CAPTURAS: sabe {conhecimento.Categoria} — {conhecimento.Titulo}");
+
+        if (caderno != null)
+            Debug.Log($"CAPTURAS: caderno aberto={caderno.IsOpen}");
     }
 
     private static void Relatar(PhotoComparisonSystem comparacao)

@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53f087d30b8b4a5069add993a5d64ed9, type: 3}
+  m_Name: CadeiaDeConhecimento
+  m_EditorClassIdentifier: Assembly-CSharp::CadeiaDeConhecimento
+  elos:
+  - texto: Thomas
+    exigeId: pessoa:thomas-hale
+  - texto: Thomas morreu em 1986
+    exigeId: documento:obituario-thomas-hale
+  - texto: Thomas aparece em 1994
+    exigeId: fotografia:fotografia-estudio-1994
+  - texto: Ethan investigou Thomas
+    exigeId: pessoa:ethan-cole
+  - texto: Existem outros casos
+    exigeId: descoberta:outros-casos
+  - texto: "A f\xE1brica possui t\xFAneis"
+    exigeId: "local:t\xFAneis-da-f\xE1brica"
+  - texto: "Existe uma c\xE2mara"
+    exigeId: "local:c\xE2mara-subterr\xE2nea"
+  - texto: "As fotografias ligam diferentes \xE9pocas"
+    exigeId: descoberta:fotografia-estudio-1986:porta-lateral
+  - texto: O protagonista aparece nas fotografias
+    exigeId: descoberta:protagonista-nas-fotografias
+  - texto: "O protagonista faz parte do fen\xF3meno"
+    exigeId: descoberta:protagonista-no-fenomeno

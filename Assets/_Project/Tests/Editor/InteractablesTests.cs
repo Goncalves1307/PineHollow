@@ -30,6 +30,12 @@ public class InteractablesTests
         }
 
         criados.Clear();
+
+        // A FASE 6 pendurou um registo de conhecimento nestas fontes: apanhar
+        // uma fotografia, ler um documento e alinhar passaram a escrever nele.
+        // Sem isto, cada teste deixava para trás um registo criado de
+        // emergência e o teste seguinte encontrava a cena suja.
+        RegistoDeConhecimento.Esquecer();
     }
 
     [Test]

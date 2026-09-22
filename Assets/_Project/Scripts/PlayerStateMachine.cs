@@ -253,6 +253,12 @@ public class PlayerStateMachine : MonoBehaviour
             // Alinhar uma fotografia sobre a outra é arrastar com o rato:
             // sem o cursor livre não há como lá chegar.
             case PlayerState.ComparingPhotos:
+
+            // O caderno escolhe-se com o rato, e no quadro arrastam-se cartões
+            // e ligam-se uns aos outros. A subtask da FASE 6 diz «é ecrã de
+            // rato: depende do dono único do cursor» — é esta linha.
+            case PlayerState.ViewingJournal:
+            case PlayerState.ViewingBoard:
                 return true;
 
             default:

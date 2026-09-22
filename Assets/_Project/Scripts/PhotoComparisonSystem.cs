@@ -65,6 +65,11 @@ public class PhotoComparisonSystem : MonoBehaviour
 
     // O que se descobriu no alinhamento mais recente. Lista e não um sim/não
     // porque uma fotografia pode esconder mais do que uma coisa.
+    //
+    // É limpa a cada alinhamento: isto é o registo do ÚLTIMO, não um arquivo.
+    // O arquivo é o RegistoDeConhecimento, para onde cada descoberta é copiada
+    // no momento em que sai — sem isso, o alinhamento seguinte apagava o que o
+    // jogador tinha acabado de descobrir e não sobrava vestígio nenhum.
     private readonly List<PhotoDiscovery> descobertasReveladas =
         new List<PhotoDiscovery>();
 
@@ -309,8 +314,17 @@ public class PhotoComparisonSystem : MonoBehaviour
             if (descoberta == null || !descoberta.SaiDoAlinhamentoCom(par))
                 continue;
 
-            if (descoberta.Revelar())
-                descobertasReveladas.Add(descoberta);
+            if (!descoberta.Revelar())
+                continue;
+
+            descobertasReveladas.Add(descoberta);
+
+            FontesDeConhecimento.RegistarDescoberta(
+                RegistoDeConhecimento.Instancia,
+                fotografia,
+                descoberta,
+                par
+            );
         }
     }
 

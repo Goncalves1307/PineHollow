@@ -76,6 +76,14 @@ public class PhotoInteractable : MonoBehaviour, IInteractable
 
         photographySystem.AddPhoto(dados);
 
+        // O que o jogador aprendeu por a ter tido na mão: a fotografia, o ano,
+        // o sítio e quem lá está. Vai para o registo e não fica só no álbum —
+        // o álbum é uma pilha de imagens, o caderno é o que ele sabe.
+        FontesDeConhecimento.RegistarFotografia(
+            RegistoDeConhecimento.Instancia,
+            dados
+        );
+
         Apanhada = true;
     }
 

@@ -19,14 +19,17 @@ Scope: compact open world ~3 km², town of ~2.800 inhabitants, 8 chapters, ~7 fl
 endings. First technical objective is a **15–20 minute vertical slice** (arrival → house → studio →
 first photographs → first alignment → first 1986 flashback → altered photograph), not the full town.
 
-**Current build reality: a mechanics sandbox with a working photography layer.** 28 scripts, two
-scenes, 157 EditMode tests. Walk, look, sprint, crouch, interact at short range (`E`) with a highlight on the focused
+**Current build reality: a mechanics sandbox with a working photography layer and an
+investigation layer on top of it.** 37 scripts, two scenes, 211 EditMode tests. Walk, look, sprint, crouch, interact at short range (`E`) with a highlight on the focused
 object, open a door, a drawer and a switch, read a document, pick an object up to rotate, zoom and
 read its description, take screenshot-style photos. Since FASE 5: pick up **authored photographs**
 from the world, flip them to read the canonical text on the back (`Q`), open the album (`Tab`),
 compare two photographs side by side or overlaid, and align them — which flashes and reveals what
-that pair hides. Footsteps and object-handling sounds play. No NPCs, no save, no era system, and
-**no flashback**: aligning fires a trigger nothing consumes yet.
+that pair hides. Since FASE 6: everything the player learns is recorded — the photographs, their years, their
+places, the people in them, the documents read and the discoveries revealed — and shows up in a
+journal (`Tab`'s neighbour, `J`) and on an investigation board (`B`) where the player, and only
+the player, draws the connections. Footsteps and object-handling sounds play. No NPCs, no save,
+no era system, and **no flashback**: aligning fires a trigger nothing consumes yet.
 `bundleVersion 0.1.0`, `companyName: DefaultCompany`.
 
 Docs, comments, `Debug.Log` strings and UI text are in **pt-PT**. Match that when editing. Commits
@@ -110,11 +113,12 @@ grep -nE "error CS|warning CS" Logs/Editor.log | tail -20
 
 `Logs/Editor.log` is append-only across sessions and currently ~10MB — always `tail`, never `cat`.
 
-**There are eleven test files**, all EditMode, **157 tests**, in `Assets/_Project/Tests/Editor/`:
+**There are fourteen test files**, all EditMode, **211 tests**, in `Assets/_Project/Tests/Editor/`:
 `PlayerStateMachineTests`, `InteractionSystemTests`, `InteractablesTests`, `InspectionSystemTests`,
 `HighlightSystemTests`, `CrosshairSystemTests`, `PrototypePlayerSceneTests` (this one opens the
 real scene and asserts the inspector wiring), plus the FASE 5 four: `PhotoDataTests`,
-`PhotoComparisonSystemTests`, `PhotoAlbumSystemTests` and `PhotoVersoTests`.
+`PhotoComparisonSystemTests`, `PhotoAlbumSystemTests` and `PhotoVersoTests`, plus the FASE 6
+three: `ConhecimentoTests`, `JournalSystemTests` and `InvestigationBoardSystemTests`.
 
 **Tests that touch UI must wire the `RawImage`s.** The comparison tests did not, and because
 `Desenhar()`/`AplicarTransformacao()` return on the first line without them, a bug that put the
@@ -139,6 +143,11 @@ asmdef would not see the game code at all. The way around it is the folder name:
 `Assembly-CSharp-Editor-testable` and which *does* see `Assembly-CSharp`. Put new EditMode tests
 next to that file and they are picked up with no asmdef. Giving the game code its own asmdef would
 work too, but it is a structural change — do not do it as a side effect of adding a test.
+
+The scene assembly for FASE 6 is `Assets/_Project/Scripts/Editor/Fase6Montagem.cs`, same shape as
+`Fase5Montagem` and run the same way (`-executeMethod Fase6Montagem.Correr`). It also writes
+`Assets/_Project/Investigation/CadeiaDeConhecimento.asset` and puts the knowledge registry on the
+Bootstrap object.
 
 What does exist is a settings validator, `Assets/_Project/Scripts/Editor/Fase1Validacao.cs`. It
 asserts the FASE 1 foundation — layers, collision matrix, folders, build settings, quality levels,
@@ -226,6 +235,31 @@ the fixed photograph stayed where the side-by-side view had left it, the game re
 `Alinhada = true` with the images more than half a width apart, and never fired where the player
 actually overlapped them.
 
+**Investigation** — [`RegistoDeConhecimento`](Assets/_Project/Scripts/RegistoDeConhecimento.cs) is
+everything the player knows: a list of [`Conhecimento`](Assets/_Project/Scripts/Conhecimento.cs),
+each one a `Pessoa`, `Local`, `Data`, `Fotografia`, `Documento` or `Descoberta`. Do **not** confuse
+that enum with `TipoDeDescoberta`: that one classifies what is visible *inside an image* (a door, a
+shadow, a person in that corner); this one classifies what the player has learned (Thomas Hale).
+
+It lives on the **Bootstrap** object and is reached through the static `Instancia`, not a
+`[SerializeField]` — Unity does not serialise references across scenes, and the whole point is that
+it survives the scene swaps FASE 7 will do. Entering play mode straight into `Prototype_Player`
+(which is how this project is tested, and how `Fase5Capturas` runs) creates an emergency registry
+with `Automatico == true`; an authored one takes over when it appears, and carries the emergency
+one's entries with it. That rule lives in `Assumir()`, which is public **because `Awake` does not
+run in EditMode** and the rule was wrong inside it for exactly that reason.
+
+[`FontesDeConhecimento`](Assets/_Project/Scripts/FontesDeConhecimento.cs) is the only place that
+decides how a photograph, a document or a discovery becomes a journal entry — two photographs with
+"Thomas Hale" have to produce the *same* entry or the journal fills with duplicates and the
+progression chain never lights.
+
+[`JournalSystem`](Assets/_Project/Scripts/JournalSystem.cs) and
+[`InvestigationBoardSystem`](Assets/_Project/Scripts/InvestigationBoardSystem.cs) both live
+**outside their own panels**, unlike `PhotoAlbumSystem` — that is why `J` and `B` can be read with
+the screen closed, and why neither needed a key handler bolted onto another system the way `Tab`
+did.
+
 ## Input
 
 **The project is set to the new Input System *only*** (`activeInputHandler: 1`,
@@ -241,7 +275,9 @@ treat the asset as dead weight.
 
 Current bindings: `WASD` + `LShift` sprint + `LeftCtrl` crouch (hold, like the sprint), mouse
 look, `E` interact, `F` photo mode, `Tab` album, LMB shutter / thumbnail click, `Esc` back out.
-FASE 5 added: **`Q` flips** a photograph (in hand and in the viewer), **right-click on a thumbnail**
+FASE 6 added **`J`** (the journal) and **`B`** (the investigation board), both mouse screens;
+inside the board, **right-click** marks a card and marking two connects them, and **left-drag**
+moves a card. FASE 5 added: **`Q` flips** a photograph (in hand and in the viewer), **right-click on a thumbnail**
 marks it for comparison (two marks open it), and inside the comparison **`Space`** switches side by
 side / overlay, **drag** moves, **right-drag** rotates and **scroll** scales — and those three do
 nothing in side-by-side, on purpose. The `Esc` is read in `PlayerStateMachine` and nowhere else; everything else is polled by
@@ -299,6 +335,27 @@ wiring, and re-links anything that came loose. It is idempotent and must stay th
 unwired. `Fase5Capturas.cs` drives play mode and writes one PNG per screen; it does **not** take
 `-nographics`, and it registers its stepper before `EnterPlaymode` because this project enters
 play mode **without a domain reload**, so `[InitializeOnLoadMethod]` never fires.
+
+**A `Garantir*` that returns early never fixes what is already in the scene.** It is the
+`GarantirFotografia` defect of FASE 5, and FASE 6 reproduced it twice in the same file that
+criticises it: changing a label's colour in `Fase6Montagem` printed "nothing to do" while the
+cards stayed blank. Every `Garantir*` there now re-applies colour, text and anchors to an object
+it found. If you add one, make it fix, not just create.
+
+**Light text on a light card is invisible, and only a screenshot says so.** The board's cards are
+pale paper and every other list in the project uses pale text: the first capture produced nine
+blank rectangles. Same family as the white object in the beige scene. `Fase5Capturas` now walks
+the whole FASE 6 flow too — steps 14 to 28, five extra PNGs — and it only proves anything because
+it runs *after* the FASE 5 flow has produced real knowledge to show.
+
+**UI built in fixed pixels breaks on a narrower Game view.** The first FASE 6 layout was laid out
+for 1600px and the outer tabs fell off the screen at 1050px; the capture runs maximised and never
+saw it. Everything in `Fase6Montagem` is anchored in fractions of the screen now, and the tab row
+uses `childForceExpandWidth` so six tabs always share whatever width there is.
+
+**`EditorSceneManager.OpenScene` in Single mode throws away unsaved work without asking.** Both
+assembly scripts open scenes; `Fase6Montagem` calls `SaveCurrentModifiedScenesIfUserWantsTo()`
+first when not in batch mode. `Fase5Montagem` still does not.
 
 **The cursor and `Esc` have a single owner: [`PlayerStateMachine`](Assets/_Project/Scripts/PlayerStateMachine.cs).**
 Fixed in FASE 2. It is the **only** class that writes `Cursor.lockState`/`Cursor.visible` and the
