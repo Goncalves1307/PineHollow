@@ -39,15 +39,15 @@ public class PhotoAsset : ScriptableObject
         if (fotografia == null)
             return;
 
-        if (fotografia.Imagem == null)
+        if (fotografia.ImagemBase == null)
         {
             Debug.LogWarning(
                 $"{name}: fotografia sem imagem — aparece em branco no álbum.",
                 this
             );
         }
-        else if (fotografia.Imagem.width != LarguraAutorada ||
-                 fotografia.Imagem.height != AlturaAutorada)
+        else if (fotografia.ImagemBase.width != LarguraAutorada ||
+                 fotografia.ImagemBase.height != AlturaAutorada)
         {
             // As fotografias encontradas são desenhadas em ecrã inteiro no
             // viewer e sobrepostas na comparação: abaixo desta resolução
@@ -55,11 +55,43 @@ public class PhotoAsset : ScriptableObject
             // Os 2048×1368 são múltiplos de 4 (exigência de compressão) e
             // mantêm a proporção 3:2 da fotografia de 35 mm.
             Debug.LogWarning(
-                $"{name}: a imagem é {fotografia.Imagem.width}×" +
-                $"{fotografia.Imagem.height} e as fotografias autoradas são " +
+                $"{name}: a imagem é {fotografia.ImagemBase.width}×" +
+                $"{fotografia.ImagemBase.height} e as fotografias autoradas são " +
                 $"{LarguraAutorada}×{AlturaAutorada}.",
                 this
             );
+        }
+
+        foreach (PhotoVariante variante in fotografia.Variantes)
+        {
+            if (variante == null)
+                continue;
+
+            // Uma variante sem stateId nunca vale, e ninguém dá por ela até a
+            // fotografia não mudar no regresso do flashback.
+            if (string.IsNullOrWhiteSpace(variante.StateId))
+            {
+                Debug.LogWarning(
+                    $"{name}: variante sem stateId — nunca chega a valer.",
+                    this
+                );
+            }
+
+            // A comparação sobrepõe a versão alterada à mesma fotografia de
+            // outra década: com outra proporção, o alinhamento que era certo
+            // deixava de o ser só porque o passado mudou.
+            if (variante.Imagem != null && fotografia.ImagemBase != null &&
+                (variante.Imagem.width != fotografia.ImagemBase.width ||
+                 variante.Imagem.height != fotografia.ImagemBase.height))
+            {
+                Debug.LogWarning(
+                    $"{name}: a variante {variante.Id} tem imagem de " +
+                    $"{variante.Imagem.width}×{variante.Imagem.height} e a " +
+                    $"base de {fotografia.ImagemBase.width}×" +
+                    $"{fotografia.ImagemBase.height}.",
+                    this
+                );
+            }
         }
 
         if (fotografia.Ano != 0 && !AnoCanonico(fotografia.Ano))

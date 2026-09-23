@@ -89,6 +89,13 @@ public class EstadoDoMundo : MonoBehaviour
         }
     }
 
+    // O estado que já existe, ou null — sem criar nenhum. Para quem só LÊ e é
+    // chamado muitas vezes: uma fotografia a decidir que versão mostra não pode
+    // criar um GameObject na cena aberta do editor só por ter sido desenhada
+    // num inspector, nem varrer a cena à procura de um autorado a cada leitura.
+    // Sem estado não há alteração nenhuma, e a resposta certa é a de omissão.
+    public static EstadoDoMundo Existente => instancia;
+
     private static EstadoDoMundo Autorado()
     {
         // Sem o FindObjectsSortMode: a sobrecarga que o leva está obsoleta no

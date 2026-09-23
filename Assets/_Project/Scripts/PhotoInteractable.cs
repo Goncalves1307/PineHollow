@@ -84,6 +84,11 @@ public class PhotoInteractable : MonoBehaviour, IInteractable
             dados
         );
 
+        // Apanhada pela primeira vez já depois do flashback: o jogador nunca a
+        // viu da outra maneira, mas o caderno regista à mesma o que ela mostra
+        // — é o que lá está, e a pergunta «que figura é esta» é dele.
+        FontesDeConhecimento.RegistarAlteracao(dados);
+
         Apanhada = true;
     }
 

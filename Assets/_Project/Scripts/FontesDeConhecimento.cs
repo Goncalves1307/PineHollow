@@ -139,6 +139,55 @@ public static class FontesDeConhecimento
         );
     }
 
+    // Uma fotografia que o jogador vê já alterada.
+    //
+    // Entra como uma descoberta NOVA e não reescreve a entrada da fotografia.
+    // O caderno é o que o jogador sabe, e ele sabe as duas coisas: que a
+    // fotografia era de uma maneira e que agora é de outra. Reescrever a antiga
+    // apagava precisamente a prova de que algo mudou.
+    //
+    // Chamado por quem mostra a fotografia (o viewer, a comparação, o exame na
+    // mão), e não pelo flashback ao voltar: a regra é o jogador VER, e quem
+    // volta de 1986 sem abrir o álbum ainda não sabe de nada.
+    public static bool RegistarAlteracao(PhotoData fotografia)
+    {
+        // Pergunta à fotografia primeiro, e só depois ao registo: a Instancia
+        // cria um registo de emergência quando não há nenhum, e desenhar uma
+        // fotografia sem variante nenhuma — que é quase todas — não tem de
+        // pôr objectos na cena.
+        if (fotografia == null || fotografia.VarianteActiva == null)
+            return false;
+
+        return RegistarAlteracao(RegistoDeConhecimento.Instancia, fotografia);
+    }
+
+    public static bool RegistarAlteracao(RegistoDeConhecimento registo, PhotoData fotografia)
+    {
+        if (registo == null || fotografia == null)
+            return false;
+
+        PhotoVariante variante = fotografia.VarianteActiva;
+
+        if (variante == null || string.IsNullOrWhiteSpace(variante.Revelacao))
+            return false;
+
+        // A proveniência não diz «antes não era assim»: quem apanha a
+        // fotografia pela primeira vez depois do flashback nunca a viu de
+        // outra maneira, e o caderno não sabe mais do que o jogador.
+
+        return registo.Registar(
+            Conhecimento.Identificar(
+                CategoriaDeConhecimento.Descoberta,
+                fotografia.Id,
+                variante.Id
+            ),
+            CategoriaDeConhecimento.Descoberta,
+            variante.Revelacao,
+            "Vista em " + fotografia.Id + ".",
+            fotografia.Id
+        );
+    }
+
     // Um documento lido. O stateId é a chave preferida porque é o que a FASE 7
     // usa para reconhecer o mesmo objecto nas duas épocas e o que a FASE 21
     // grava; o título só entra quando não há stateId, e aí fica escrito no log

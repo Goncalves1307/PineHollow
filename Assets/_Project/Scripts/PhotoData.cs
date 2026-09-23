@@ -88,29 +88,100 @@ public class PhotoData
     // task pede, e que decide se a fotografia tem verso para ler.
     [SerializeField] private bool autorada;
 
+    [Header("Variantes")]
+    // As versões desta fotografia depois de o passado ter sido mexido (FASE 8).
+    // Vazio é o normal. Quando mais do que uma vale, ganha a ÚLTIMA da lista:
+    // quem autora põe por ordem de acontecimento, e a mais recente é a que o
+    // jogador tem de ver.
+    [SerializeField] private List<PhotoVariante> variantes = new List<PhotoVariante>();
+
     public string Id => id;
     public int Ano => ano;
     public string Data => data;
     public string Local => local;
-    public string Frente => frente;
-    public string Verso => verso;
-    public Texture2D Imagem => imagem;
     public bool Autorada => autorada;
+
+    // Frente, verso, imagem e pessoas são lidos já com a variante resolvida, e
+    // é de propósito que se resolve a cada leitura e não numa troca feita ao
+    // voltar do flashback. Quem já tem a fotografia na mão guarda ESTE objecto
+    // — o álbum, o viewer, a comparação —, e o AddPhoto recusa um id repetido:
+    // uma troca teria de ir procurar cada cópia e substituí-la, e a que
+    // escapasse ficava a mostrar o passado que já não aconteceu.
+    public string Frente => Resolver(v => v.Frente, frente);
+    public string Verso => Resolver(v => v.Verso, verso);
+
+    public Texture2D Imagem
+    {
+        get
+        {
+            PhotoVariante activa = VarianteActiva;
+
+            return activa != null && activa.Imagem != null ? activa.Imagem : imagem;
+        }
+    }
+
+    // A imagem autorada, sem variante. É a que o PhotoAsset valida no editor e
+    // a que o PhotographySystem destrói nas capturas — nenhum dos dois quer a
+    // versão alterada, e o primeiro nem devia estar a perguntar ao mundo.
+    public Texture2D ImagemBase => imagem;
+
+    public IReadOnlyList<PhotoVariante> Variantes =>
+        (IReadOnlyList<PhotoVariante>)variantes ?? Array.Empty<PhotoVariante>();
+
+    // A variante que vale agora, ou null. Lê o EstadoDoMundo que existir, sem o
+    // criar — sem mundo não há alteração, e a fotografia é a de origem.
+    public PhotoVariante VarianteActiva => VarianteEm(EstadoDoMundo.Existente);
+
+    public PhotoVariante VarianteEm(EstadoDoMundo mundo)
+    {
+        if (variantes == null || variantes.Count == 0 || mundo == null)
+            return null;
+
+        for (int i = variantes.Count - 1; i >= 0; i--)
+        {
+            if (variantes[i] != null && variantes[i].ValeEm(mundo))
+                return variantes[i];
+        }
+
+        return null;
+    }
+
+    private string Resolver(Func<PhotoVariante, string> campo, string original)
+    {
+        PhotoVariante activa = VarianteActiva;
+
+        if (activa == null)
+            return original;
+
+        string valor = campo(activa);
+
+        return string.IsNullOrWhiteSpace(valor) ? original : valor;
+    }
 
     public IReadOnlyList<PhotoMetadata> Metadados => metadados;
     public IReadOnlyList<PhotoDiscovery> Descobertas => descobertas;
 
     // Nunca null, para quem itera não ter de se defender. Um array por ligar
     // no inspector chega aqui como null e não como vazio.
-    public IReadOnlyList<string> Personagens =>
-        personagens ?? Array.Empty<string>();
+    public IReadOnlyList<string> Personagens
+    {
+        get
+        {
+            PhotoVariante activa = VarianteActiva;
+
+            if (activa != null && activa.Personagens != null && activa.Personagens.Length > 0)
+                return activa.Personagens;
+
+            return personagens ?? Array.Empty<string>();
+        }
+    }
 
     public IReadOnlyList<PhotoAlignment> Alinhamentos =>
         (IReadOnlyList<PhotoAlignment>)alinhamentos ?? Array.Empty<PhotoAlignment>();
 
     // Uma fotografia sem nada escrito nas costas não se vira — não há segunda
     // face para mostrar, e virá-la mostrava um painel vazio.
-    public bool TemVerso => !string.IsNullOrWhiteSpace(verso);
+    public bool TemVerso => !string.IsNullOrWhiteSpace(Verso);
 
     // Construtor sem argumentos para a serialização do Unity. Não é para ser
     // chamado a partir do jogo: usa-se DeCaptura ou um PhotoAsset.
@@ -132,7 +203,8 @@ public class PhotoData
             personagens = Array.Empty<string>(),
             alinhamentos = new List<PhotoAlignment>(),
             metadados = new List<PhotoMetadata>(),
-            descobertas = new List<PhotoDiscovery>()
+            descobertas = new List<PhotoDiscovery>(),
+            variantes = new List<PhotoVariante>()
         };
     }
 
@@ -203,8 +275,18 @@ public class PhotoData
             personagens = personagens ?? Array.Empty<string>(),
             alinhamentos = new List<PhotoAlignment>(),
             metadados = new List<PhotoMetadata>(),
-            descobertas = new List<PhotoDiscovery>()
+            descobertas = new List<PhotoDiscovery>(),
+            variantes = new List<PhotoVariante>()
         };
+
+        if (variantes != null)
+        {
+            foreach (PhotoVariante variante in variantes)
+            {
+                if (variante != null)
+                    copia.variantes.Add(variante.Copiar());
+            }
+        }
 
         if (alinhamentos != null)
         {

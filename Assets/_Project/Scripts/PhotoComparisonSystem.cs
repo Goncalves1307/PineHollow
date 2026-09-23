@@ -125,6 +125,11 @@ public class PhotoComparisonSystem : MonoBehaviour
         flashRestante = 0f;
         descobertasReveladas.Clear();
 
+        // Pôr a fotografia alterada ao lado de outra também é vê-la. Aqui e
+        // não no Desenhar, que corre a cada frame de arrasto.
+        FontesDeConhecimento.RegistarAlteracao(Fixa);
+        FontesDeConhecimento.RegistarAlteracao(Movel);
+
         Desenhar();
 
         if (painel != null)

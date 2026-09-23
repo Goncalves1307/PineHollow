@@ -116,6 +116,12 @@ public class PhotoViewerSystem : MonoBehaviour
     {
         bool frente = !AMostrarVerso;
 
+        // Ver a fotografia já alterada é o momento em que o jogador aprende que
+        // o passado mudou — é aqui, e não ao voltar de 1986, que o caderno o
+        // regista.
+        if (frente && Fotografia != null)
+            FontesDeConhecimento.RegistarAlteracao(Fotografia);
+
         if (photoImage != null)
         {
             photoImage.texture = Fotografia != null ? Fotografia.Imagem : null;

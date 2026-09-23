@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc15661f31f44c46ac37053e769878c5, type: 3}
+  m_Name: Fotografia_Lago_1986
+  m_EditorClassIdentifier: Assembly-CSharp::PhotoAsset
+  fotografia:
+    id: Fotografia_Lago_1986
+    ano: 1986
+    data: 1986
+    local: Lago
+    personagens:
+    - Thomas Hale
+    frente: Thomas junto ao lago.
+    verso: 
+    imagem: {fileID: 2800000, guid: 2447b6511aa9a073383ccf1aa16cd720, type: 3}
+    metadados: []
+    alinhamentos: []
+    descobertas: []
+    autorada: 1
+    variantes:
+    - stateId: flashback-lago-1986
+      chave: presente
+      valor: true
+      imagem: {fileID: 2800000, guid: 847609e7cb03c8852bf03ff2330af088, type: 3}
+      frente: "Thomas junto ao lago. Atr\xE1s dele, perto das \xE1rvores, uma figura."
+      verso: 
+      personagens: []
+      revelacao: "Agora existe uma figura atr\xE1s de Thomas."

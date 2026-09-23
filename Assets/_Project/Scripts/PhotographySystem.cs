@@ -102,8 +102,8 @@ public class PhotographySystem : MonoBehaviour
     {
         foreach (PhotoData fotografia in capturedPhotos)
         {
-            if (fotografia != null && !fotografia.Autorada && fotografia.Imagem != null)
-                Destroy(fotografia.Imagem);
+            if (fotografia != null && !fotografia.Autorada && fotografia.ImagemBase != null)
+                Destroy(fotografia.ImagemBase);
         }
 
         capturedPhotos.Clear();

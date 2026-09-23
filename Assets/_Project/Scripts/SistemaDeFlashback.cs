@@ -45,6 +45,21 @@ public class SistemaDeFlashback : MonoBehaviour
     [Header("O que acaba o flashback")]
     [SerializeField] private FimDeFlashback fim;
 
+    [Header("A marca que o jogador deixa")]
+    // «Não podes observar o passado sem deixar uma marca nele.» Quem esteve em
+    // 1986 foi o jogador, e é a presença DELE que fica escrita — não uma acção
+    // do Thomas. Pôr o Thomas em MarcaOPresente para isto fazia-o parar e
+    // encarar o jogador no primeiro flashback, que é o degrau Inconsciente.
+    //
+    // Vazio é um flashback que não deixa marca, e isso contradiz a regra
+    // central: o Start queixa-se.
+    [Tooltip("stateId que fica escrito no mundo ao voltar deste flashback.")]
+    [SerializeField] private string stateIdDaPresenca;
+
+    public const string ChaveDaPresenca = "presente";
+
+    public string StateIdDaPresenca => stateIdDaPresenca;
+
     private float tempo;
 
     public FaseDoFlashback Fase { get; private set; } = FaseDoFlashback.Fora;
@@ -58,6 +73,15 @@ public class SistemaDeFlashback : MonoBehaviour
         // seja o que for. Um objecto de 1986 deixado activo no editor ficava
         // activo em 2026 até à primeira troca — e era visível na cena inteira.
         EstadoDoMundo.Instancia.Reaplicar();
+
+        if (string.IsNullOrWhiteSpace(stateIdDaPresenca))
+        {
+            Debug.LogWarning(
+                "SistemaDeFlashback em '" + name + "' sem stateIdDaPresenca: " +
+                "voltar deste flashback não muda nada em 2026.",
+                this
+            );
+        }
     }
 
     private void Update()
@@ -262,6 +286,13 @@ public class SistemaDeFlashback : MonoBehaviour
     {
         if (stateMachine != null)
             stateMachine.PopMode(PlayerState.Flashback);
+
+        // A marca é escrita ANTES de mudar de época: o MudarPara acerta o mundo
+        // inteiro, e o que se acertar nele tem de já encontrar 1986 mexido.
+        // Escreve-se aqui, com o ecrã tapado, e não à entrada: a fotografia só
+        // pode mudar quando o jogador já não está a olhar para ela em 1986.
+        if (!string.IsNullOrWhiteSpace(stateIdDaPresenca))
+            EstadoDoMundo.Instancia.Registar(stateIdDaPresenca, ChaveDaPresenca, true);
 
         EstadoDoMundo.Instancia.MudarPara(Epoca.Presente2026);
 
