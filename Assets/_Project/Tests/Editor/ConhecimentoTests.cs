@@ -86,8 +86,8 @@ public class ConhecimentoTests
     [Test]
     public void Identificar_DescobertasHomonimasEmFotografiasDiferentesNaoColidem()
     {
-        // O PhotoDiscovery.Id é único DENTRO de uma fotografia e mais nada — o
-        // Fase5Montagem escreve "porta-lateral" em todas as que cria. Sem a
+        // O PhotoDiscovery.Id é único DENTRO de uma fotografia e mais nada — a
+        // Fase5Montagem escrevia "porta-lateral" em todas as que criava. Sem a
         // fotografia na chave, a segunda porta lateral silenciava a primeira.
         string primeira = Conhecimento.Identificar(
             CategoriaDeConhecimento.Descoberta, "Foto_1986", "porta-lateral");

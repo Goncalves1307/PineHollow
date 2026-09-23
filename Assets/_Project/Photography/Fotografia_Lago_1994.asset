@@ -10,19 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fc15661f31f44c46ac37053e769878c5, type: 3}
-  m_Name: Fotografia_Estudio_1994
+  m_Name: Fotografia_Lago_1994
   m_EditorClassIdentifier: Assembly-CSharp::PhotoAsset
   fotografia:
-    id: Fotografia_Estudio_1994
+    id: Fotografia_Lago_1994
     ano: 1994
-    data: 3 de Outubro de 1994
-    local: "Est\xFAdio do Ethan"
+    data: 1994
+    local: Lago
     personagens:
     - Thomas Hale
-    frente: A mesma fachada, oito anos depois. Falta uma porta.
+    frente: Thomas junto ao lago, anos depois.
     verso: 
-    imagem: {fileID: 0}
+    imagem: {fileID: 2800000, guid: 6e1b7d31e166d66c4a4b5c18d743f871, type: 3}
     metadados: []
     alinhamentos: []
     descobertas: []
-    autorada: 0
+    autorada: 1
+    variantes: []

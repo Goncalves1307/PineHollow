@@ -23,8 +23,21 @@ MonoBehaviour:
     verso: 
     imagem: {fileID: 2800000, guid: 2447b6511aa9a073383ccf1aa16cd720, type: 3}
     metadados: []
-    alinhamentos: []
-    descobertas: []
+    alinhamentos:
+    - comId: Fotografia_Lago_1994
+      posicaoAlvo: {x: 0, y: 0}
+      rotacaoAlvo: 0
+      escalaAlvo: 1
+      toleranciaPosicao: 0.06
+      toleranciaRotacao: 6
+      toleranciaEscala: 0.1
+    descobertas:
+    - id: thomas-nao-mudou
+      tipo: 1
+      descricao: "Thomas n\xE3o mudou."
+      posicaoNaImagem: {x: 0.6, y: 0.27}
+      revelaAoAlinharCom: Fotografia_Lago_1994
+      revelada: 0
     autorada: 1
     variantes:
     - stateId: flashback-lago-1986

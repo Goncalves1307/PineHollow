@@ -82,8 +82,8 @@ public class Conhecimento
     // e as partes que o identificam.
     //
     // As partes vão todas porque os ids das peças de baixo NÃO são únicos: o
-    // PhotoDiscovery.Id é único dentro de uma fotografia e mais nada (hoje o
-    // Fase5Montagem escreve "porta-lateral" em todas as que cria). Uma descoberta
+    // PhotoDiscovery.Id é único dentro de uma fotografia e mais nada (a
+    // Fase5Montagem escrevia "porta-lateral" em todas as que criava). Uma descoberta
     // é identificada pela fotografia mais o seu id, e não pelo seu id sozinho —
     // sem isto, a segunda fotografia com uma porta lateral silenciava a primeira.
     public static string Identificar(CategoriaDeConhecimento categoria, params string[] partes)

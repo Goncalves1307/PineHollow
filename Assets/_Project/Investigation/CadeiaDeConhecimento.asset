@@ -18,7 +18,7 @@ MonoBehaviour:
   - texto: Thomas morreu em 1986
     exigeId: documento:obituario-thomas-hale
   - texto: Thomas aparece em 1994
-    exigeId: fotografia:fotografia-estudio-1994
+    exigeId: fotografia:fotografia-lago-1994
   - texto: Ethan investigou Thomas
     exigeId: pessoa:ethan-cole
   - texto: Existem outros casos
@@ -28,7 +28,7 @@ MonoBehaviour:
   - texto: "Existe uma c\xE2mara"
     exigeId: "local:c\xE2mara-subterr\xE2nea"
   - texto: "As fotografias ligam diferentes \xE9pocas"
-    exigeId: descoberta:fotografia-estudio-1986:porta-lateral
+    exigeId: descoberta:fotografia-lago-1986:thomas-nao-mudou
   - texto: O protagonista aparece nas fotografias
     exigeId: descoberta:protagonista-nas-fotografias
   - texto: "O protagonista faz parte do fen\xF3meno"

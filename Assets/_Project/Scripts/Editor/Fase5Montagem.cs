@@ -311,25 +311,32 @@ public static class Fase5Montagem
         if (inspeccao == null)
             return;
 
+        // O conteúdo destas duas passou a ser o do capítulo 1 na FASE 8, e quem
+        // o escreve é a Fase8Montagem, que o reaplica a cada corrida — este
+        // GarantirFotografia só cria, e sai cedo se o asset existir. Os nomes
+        // são os novos para que, num clone limpo, esta montagem e a da FASE 8
+        // falem do mesmo ficheiro. O verso «Ele ainda não chegou.», a data de
+        // 3/10/1994 e a porta lateral saíram: eram de outros capítulos ou de
+        // documento nenhum.
         PhotoAsset mil986 = GarantirFotografia(
-            "Fotografia_Estudio_1986",
+            "Fotografia_Cidade_1986",
             1986,
-            "17 de Julho de 1986",
-            "Estúdio do Ethan",
-            new[] { "Thomas Hale", "Elias Ward" },
-            "Três pessoas à porta da fábrica. A terceira está de costas.",
-            "Ele ainda não chegou.",
-            alinhaCom: "Fotografia_Estudio_1994",
-            descoberta: "A porta lateral da fábrica, que em 1994 está tapada."
+            "1986",
+            "Pine Hollow",
+            new string[0],
+            "Pine Hollow. Numa janela, um homem.",
+            verso: null,
+            alinhaCom: null,
+            descoberta: null
         );
 
         PhotoAsset mil994 = GarantirFotografia(
-            "Fotografia_Estudio_1994",
+            "Fotografia_Lago_1994",
             1994,
-            "3 de Outubro de 1994",
-            "Estúdio do Ethan",
+            "1994",
+            "Lago",
             new[] { "Thomas Hale" },
-            "A mesma fachada, oito anos depois. Falta uma porta.",
+            "Thomas junto ao lago, anos depois.",
             verso: null,
             alinhaCom: null,
             descoberta: null

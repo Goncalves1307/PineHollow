@@ -159,12 +159,13 @@ public static class Fase5Capturas
                 break;
 
             case 1:
-                // Apanhar a fotografia de 1986: vai para a mão e para o álbum.
-                Apanhar("Fotografia_Estudio_1986");
+                // Apanhar o par do lago (FASE 8): 1986 e 1994 são as que alinham.
+                // Nenhuma das duas tem verso — o passo «3-verso» mostra a frente.
+                Apanhar("Fotografia_Lago_1986");
                 break;
 
             case 2:
-                Diagnosticar("Fotografia_Estudio_1986");
+                Diagnosticar("Fotografia_Lago_1986");
                 Capturar(pasta, "2-fotografia-na-mao");
                 break;
 
@@ -183,7 +184,7 @@ public static class Fase5Capturas
                 break;
 
             case 6:
-                Apanhar("Fotografia_Estudio_1994");
+                Apanhar("Fotografia_Lago_1994");
                 break;
 
             case 7:
@@ -390,8 +391,21 @@ public static class Fase5Capturas
 
     private static void Ler()
     {
-        DocumentInteractable documento =
-            Object.FindAnyObjectByType<DocumentInteractable>();
+        // Pela nota do Ethan e não pelo primeiro que aparecer: desde a FASE 8
+        // há também o obituário, e o FindAnyObjectByType devolvia um ou outro
+        // conforme calhasse — a captura e a cadeia mudavam de corrida para
+        // corrida sem nada ter mudado no jogo.
+        DocumentInteractable documento = null;
+
+        foreach (DocumentInteractable candidato in Object.FindObjectsByType<DocumentInteractable>(
+                     FindObjectsInactive.Exclude))
+        {
+            if (new SerializedObject(candidato).FindProperty("stateId").stringValue ==
+                Fase8Montagem.StateIdDaNotaDoEthan)
+            {
+                documento = candidato;
+            }
+        }
 
         if (documento == null)
         {

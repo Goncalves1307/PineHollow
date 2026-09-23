@@ -131,9 +131,10 @@ public static class Fase6Montagem
     //
     // Os ids que cada elo exige são um CONTRATO com as fases que vêm depois: a
     // FASE 11 autora as descobertas do Ethan e é ela que tem de produzir estes
-    // ids para os elos do meio acenderem. Hoje acendem três — o Thomas, a
-    // fotografia de 1994 e a descoberta que sai do alinhamento — e os outros
-    // sete ficam a traço, que é o estado honesto de quem ainda não tem conteúdo.
+    // ids para os elos do meio acenderem. Desde a FASE 8 acendem quatro — o
+    // Thomas, o obituário, a fotografia do lago de 1994 e a descoberta que sai
+    // de alinhar o par do lago — e os outros seis ficam a traço, que é o estado
+    // honesto de quem ainda não tem conteúdo.
     private static List<EloDaCadeia> ElosDoGdd()
     {
         return new List<EloDaCadeia>
@@ -150,7 +151,7 @@ public static class Fase6Montagem
             new EloDaCadeia(
                 "Thomas aparece em 1994",
                 Conhecimento.Identificar(
-                    CategoriaDeConhecimento.Fotografia, "Fotografia_Estudio_1994")),
+                    CategoriaDeConhecimento.Fotografia, "Fotografia_Lago_1994")),
 
             new EloDaCadeia(
                 "Ethan investigou Thomas",
@@ -175,8 +176,8 @@ public static class Fase6Montagem
                 "As fotografias ligam diferentes épocas",
                 Conhecimento.Identificar(
                     CategoriaDeConhecimento.Descoberta,
-                    "Fotografia_Estudio_1986",
-                    "porta-lateral")),
+                    "Fotografia_Lago_1986",
+                    "thomas-nao-mudou")),
 
             new EloDaCadeia(
                 "O protagonista aparece nas fotografias",
